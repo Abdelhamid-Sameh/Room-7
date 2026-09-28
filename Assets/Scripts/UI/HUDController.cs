@@ -1,0 +1,283 @@
+using UnityEngine;
+using UnityEngine.UI;
+
+/// <summary>
+/// Screen furniture: crosshair, contextual prompt, inventory read-out, clue
+/// line and the carried-radio widget.
+///
+/// Everything here is built from code (see Build) so no scene wiring is
+/// needed and the layout can be re-skinned in one file. Replace the generated
+/// hierarchy with a designer-made prefab whenever the UI gets its final look.
+/// </summary>
+public class HUDController : MonoBehaviour
+{
+    private static Font cachedFont;
+
+    private Image crosshair;
+    private float crosshairTarget = 1f;
+
+    private GameObject promptPanel;
+    private Text promptText;
+
+    private Text inventoryText;
+    private GameObject cluePanel;
+    private Text clueText;
+
+    private GameObject radioPanel;
+    private Text radioText;
+
+    private static readonly Color Warm = new Color(0.95f, 0.91f, 0.82f);
+    private static readonly Color Dim = new Color(0.55f, 0.53f, 0.47f);
+    private static readonly Color Scrim = new Color(0f, 0f, 0f, 0.38f);
+
+    // -------------------------------------------------------------- build --
+
+    public void Build()
+    {
+        BuildCrosshair();
+        BuildPrompt();
+        BuildInventory();
+        BuildClue();
+        BuildRadio();
+    }
+
+    private void BuildCrosshair()
+    {
+        Image dot = NewImage("Crosshair", transform, Warm);
+        Place(dot.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
+              Vector2.zero, new Vector2(9f, 9f));
+        dot.raycastTarget = false;
+        crosshair = dot;
+    }
+
+    private void BuildPrompt()
+    {
+        Image panel = NewImage("PromptPanel", transform, Scrim);
+        Place(panel.rectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f),
+              new Vector2(0f, 175f), new Vector2(1100f, 66f));
+        panel.raycastTarget = false;
+        promptPanel = panel.gameObject;
+
+        promptText = NewText("Prompt", panel.transform, 30, TextAnchor.MiddleCenter);
+        Fill(promptText.rectTransform, new Vector2(20f, 4f), new Vector2(-20f, -4f));
+        promptText.text = "";
+
+        // Static control reminder, always visible.
+        Text hint = NewText("Controls", transform, 20, TextAnchor.MiddleCenter);
+        Place(hint.rectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f),
+              new Vector2(0f, 122f), new Vector2(900f, 40f));
+        hint.text = "E  /  Left Click - interact";
+        SetAlpha(hint, 0.55f);
+
+        promptPanel.SetActive(false);
+    }
+
+    private void BuildInventory()
+    {
+        Image panel = NewImage("InventoryPanel", transform, Scrim);
+        Place(panel.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f),
+              new Vector2(28f, -28f), new Vector2(430f, 142f));
+        panel.raycastTarget = false;
+
+        inventoryText = NewText("Inventory", panel.transform, 24, TextAnchor.UpperLeft);
+        Fill(inventoryText.rectTransform, new Vector2(18f, 14f), new Vector2(-14f, -12f));
+        inventoryText.text = "";
+    }
+
+    private void BuildClue()
+    {
+        Image panel = NewImage("CluePanel", transform, Scrim);
+        Place(panel.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f),
+              new Vector2(28f, -182f), new Vector2(720f, 76f));
+        panel.raycastTarget = false;
+        cluePanel = panel.gameObject;
+
+        clueText = NewText("Clue", panel.transform, 21, TextAnchor.MiddleLeft);
+        Fill(clueText.rectTransform, new Vector2(18f, 6f), new Vector2(-18f, -6f));
+        clueText.text = "";
+        clueText.color = new Color(0.93f, 0.78f, 0.48f);
+
+        cluePanel.SetActive(false);
+    }
+
+    private void BuildRadio()
+    {
+        Image panel = NewImage("RadioPanel", transform, Scrim);
+        Place(panel.rectTransform, new Vector2(1f, 0f), new Vector2(1f, 0f),
+              new Vector2(-28f, 28f), new Vector2(640f, 118f));
+        panel.raycastTarget = false;
+        radioPanel = panel.gameObject;
+
+        radioText = NewText("Radio", panel.transform, 23, TextAnchor.LowerRight);
+        Fill(radioText.rectTransform, new Vector2(18f, 12f), new Vector2(-18f, -12f));
+        radioText.text = "";
+
+        radioPanel.SetActive(false);
+    }
+
+    // ------------------------------------------------------------- public --
+
+    /// <summary>Called by PlayerInteraction when the crosshair target changes.</summary>
+    public void SetPrompt(string prompt)
+    {
+        bool has = !string.IsNullOrEmpty(prompt);
+
+        if (promptPanel != null && promptPanel.activeSelf != has)
+            promptPanel.SetActive(has);
+
+        if (has && promptText != null)
+            promptText.text = $"{prompt}   <color=#B9AE95>[E]</color>";
+
+        crosshairTarget = has ? 1.7f : 1f;
+    }
+
+    /// <summary>Redraws every state-driven element. Safe to call any time.</summary>
+    public void Refresh()
+    {
+        RefreshInventory();
+        RefreshClue();
+        RefreshRadio();
+    }
+
+    // ------------------------------------------------------------ refresh --
+
+    private void RefreshInventory()
+    {
+        if (inventoryText == null) return;
+
+        inventoryText.text =
+            Line(GameState.HasCleaningKit, "Cleaning supplies") + "\n" +
+            Line(GameState.HasRadio, "Radio") + "\n" +
+            Line(GameState.UniformWorn, "Uniform (worn)");
+    }
+
+    private static string Line(bool owned, string label)
+    {
+        return owned
+            ? $"<color=#F2E9D8>[x] {label}</color>"
+            : $"<color=#857F70>[ ] {label}</color>";
+    }
+
+    private void RefreshClue()
+    {
+        if (cluePanel == null) return;
+
+        bool show = GameState.MalakUniformInspected;
+        if (cluePanel.activeSelf != show) cluePanel.SetActive(show);
+
+        if (show && clueText != null)
+            clueText.text = "Clue: Malak's uniform is still folded in her locker.";
+    }
+
+    private void RefreshRadio()
+    {
+        if (radioPanel == null) return;
+
+        bool show = GameState.HasRadio;
+        if (radioPanel.activeSelf != show) radioPanel.SetActive(show);
+        if (!show) return;
+
+        RadioController radio = GameSystems.HasInstance ? GameSystems.Instance.Radio : null;
+        string station = radio != null ? radio.StationName : "Static";
+        bool hasAudio = radio != null && radio.HasAudio;
+
+        string status;
+        if (!GameState.RadioPlaying) status = "Stopped";
+        else status = hasAudio ? "Playing" : "Playing - no tape loaded";
+
+        radioText.text =
+            $"<color=#F2E9D8>RADIO  -  {station}</color>\n" +
+            $"<color=#B9AE95>{status}</color>\n" +
+            "<color=#857F70>[R] play / pause      [T] next station</color>";
+    }
+
+    private void Update()
+    {
+        if (crosshair == null) return;
+
+        Vector3 target = Vector3.one * crosshairTarget;
+        crosshair.rectTransform.localScale =
+            Vector3.Lerp(crosshair.rectTransform.localScale, target, Time.deltaTime * 14f);
+
+        Color c = crosshair.color;
+        c.a = Mathf.Lerp(c.a, crosshairTarget > 1f ? 0.95f : 0.45f, Time.deltaTime * 14f);
+        crosshair.color = c;
+    }
+
+    // ------------------------------------------------------------- utils ---
+
+    private static Font DefaultFont
+    {
+        get
+        {
+            if (cachedFont != null) return cachedFont;
+
+            try
+            {
+                cachedFont = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            }
+            catch
+            {
+                cachedFont = null;
+            }
+
+            if (cachedFont == null)
+                cachedFont = Font.CreateDynamicFontFromOSFont("Arial", 24);
+
+            return cachedFont;
+        }
+    }
+
+    private static Image NewImage(string name, Transform parent, Color color)
+    {
+        GameObject go = new GameObject(name, typeof(RectTransform));
+        go.transform.SetParent(parent, false);
+
+        Image image = go.AddComponent<Image>();
+        image.color = color;
+        image.raycastTarget = false;
+        return image;
+    }
+
+    private static Text NewText(string name, Transform parent, int size, TextAnchor anchor)
+    {
+        GameObject go = new GameObject(name, typeof(RectTransform));
+        go.transform.SetParent(parent, false);
+
+        Text text = go.AddComponent<Text>();
+        text.font = DefaultFont;
+        text.fontSize = size;
+        text.alignment = anchor;
+        text.color = Warm;
+        text.supportRichText = true;
+        text.horizontalOverflow = HorizontalWrapMode.Wrap;
+        text.verticalOverflow = VerticalWrapMode.Overflow;
+        text.raycastTarget = false;
+        return text;
+    }
+
+    private static void Place(RectTransform rt, Vector2 anchor, Vector2 pivot,
+                              Vector2 position, Vector2 size)
+    {
+        rt.anchorMin = anchor;
+        rt.anchorMax = anchor;
+        rt.pivot = pivot;
+        rt.anchoredPosition = position;
+        rt.sizeDelta = size;
+    }
+
+    private static void Fill(RectTransform rt, Vector2 offsetMin, Vector2 offsetMax)
+    {
+        rt.anchorMin = Vector2.zero;
+        rt.anchorMax = Vector2.one;
+        rt.offsetMin = offsetMin;
+        rt.offsetMax = offsetMax;
+    }
+
+    private static void SetAlpha(Graphic graphic, float alpha)
+    {
+        Color c = graphic.color;
+        c.a = alpha;
+        graphic.color = c;
+    }
+}
