@@ -1,0 +1,4 @@
+newmtl Material
+Kd 0.8 0.8 0.8
+map_Kd tex_0.png
+map_Bump tex_2.png
