@@ -31,7 +31,7 @@ public static class GameInput
         }
     }
 
-    /// <summary>R - play / stop the carried radio.</summary>
+    /// <summary>R - turn the carried radio on / off.</summary>
     public static bool RadioPlayPressed
     {
         get
@@ -41,13 +41,23 @@ public static class GameInput
         }
     }
 
-    /// <summary>T - jump to the next station.</summary>
+    /// <summary>T - next song.</summary>
     public static bool RadioNextPressed
     {
         get
         {
             Keyboard kb = Keyboard.current;
             return kb != null && kb.tKey.wasPressedThisFrame;
+        }
+    }
+
+    /// <summary>Y - previous song.</summary>
+    public static bool RadioPrevPressed
+    {
+        get
+        {
+            Keyboard kb = Keyboard.current;
+            return kb != null && kb.yKey.wasPressedThisFrame;
         }
     }
 }

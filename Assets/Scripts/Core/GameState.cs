@@ -38,8 +38,10 @@ public static class GameState
     public static bool NabilLockerOpen;
     public static bool MalakLockerOpen;
 
-    // --- radio -----------------------------------------------------------
-    public static int RadioStation;
+    // --- radio -------------------------------------------------------------
+    /// <summary>Index into RadioController's track list. Songs, not stations -
+    /// the carried radio just plays whatever is in the playlist.</summary>
+    public static int RadioTrackIndex;
     public static bool RadioPlaying;
 
     /// <summary>Fired whenever any value above changes. HUD + widgets subscribe.</summary>
@@ -66,7 +68,7 @@ public static class GameState
         NabilLockerOpen = false;
         MalakLockerOpen = false;
 
-        RadioStation = 0;
+        RadioTrackIndex = 0;
         RadioPlaying = false;
 
         RaiseChanged();

@@ -34,6 +34,32 @@ public static class StaffRoomBuilder
 
     private const string OfficePack = "Assets/nappin/OfficeEssentialsPack/Prefabs/";
     private const string ExitDoorPrefab = "Assets/Free Wood Door Pack/Prefab/Wood/Door_4/Door_4_Brown.prefab";
+    private const string FoldedShirtPrefab = "Assets/Models/Folded shirt/source/simple folded shirt.obj";
+    private const string RadioPrefab = "Assets/AK STUDIO ART/Radio/Prefabs/Radio.prefab";
+    private const string CleaningCartSource = "Assets/Models/Cleaning cart/source/Cleaning_Cart.fbx";
+
+    /// <summary>Folded shirt is authored 2 m across - 0.15 makes it 0.30 m, sized to fit a real locker.</summary>
+    private const float ShirtScale = 0.15f;
+
+    // ------------------------------------------------ real locker (Low-Poly 3D Lockers)
+    private const string RealLockerSource = "Assets/Low-Poly 3D Lockers/Low-Poly 3D Lockers/Mesh/M.C.C.fbx";
+    private const string SplitDir = "Assets/Models/Lockers";
+
+    /// <summary>
+    /// The shipped mesh is one merged lump: a plain shell behind z = 0, and the
+    /// entire front slab (door face + vents + handle) ahead of it. Everything
+    /// past this plane is peeled off into the hinged door.
+    /// </summary>
+    private const float DoorSeamZ = 0f;
+
+    /// <summary>Vertical hinge axis on the door's right edge, in source-mesh space.</summary>
+    private static readonly Vector3 DoorHinge = new Vector3(0.24f, 0f, 0.2f);
+
+    /// <summary>The model faces +Z but the room sits on -Z, so body and door are both flipped.</summary>
+    private static readonly Quaternion ModelFlip = Quaternion.Euler(0f, 180f, 0f);
+
+    /// <summary>Top of the shelf baked into the model, in source-mesh space.</summary>
+    private const float RealShelfLocalY = -0.02f;
 
     /// <summary>
     /// The Office Essentials pack still ships Built-in "Standard" shader
@@ -153,18 +179,40 @@ public static class StaffRoomBuilder
     {
         Transform lockers = Ensure("Lockers", root);
 
-        BuildLocker(lockers, "Nabil", 0, new Vector3(-1.4f, 0f, 2.25f), 2);  // WearUniform
-        BuildLocker(lockers, "Malak", 1, new Vector3(-0.5f, 0f, 2.25f), 3);  // InspectMalakUniform
+        // Nabil's is the real Low-Poly locker: origin at the model's centre (half its
+        // 1.985 m height above the floor) and its back resting on the north wall at
+        // z 2.5.
+        BuildLocker(lockers, "Nabil", 0, new Vector3(-1.4f, 0.993f, 2.281f), 2, true);    // WearUniform
+        BuildLocker(lockers, "Malak", 1, new Vector3(-0.80f, 0.993f, 2.281f), 3, true);   // InspectMalakUniform - same real locker as Nabil
     }
 
     private static void BuildLocker(Transform parent, string ownerName, int ownerIndex,
-                                    Vector3 position, int pickupKind)
+                                    Vector3 position, int pickupKind, bool useRealModel)
     {
         Transform locker = Ensure("Locker_" + ownerName, parent);
         locker.localPosition = position;
         locker.localRotation = Quaternion.identity;
         locker.localScale = Vector3.one;
 
+        float shelfTop = useRealModel
+            ? BuildRealLocker(locker, locker.name)
+            : BuildGreyboxLocker(locker);
+
+        // Contents - physically inside the locker, hidden by the door collider.
+        GameObject uniform = BuildUniform(locker, useRealModel, shelfTop);
+
+        PickupItem pickup = uniform.AddComponent<PickupItem>();
+        SetEnum(pickup, "kind", pickupKind);
+
+        Locker component = locker.gameObject.AddComponent<Locker>();
+        SetEnum(component, "owner", ownerIndex);
+        SetString(component, "ownerName", ownerName);
+        locker.gameObject.AddComponent<AudioSource>();
+    }
+
+    /// <summary>The original primitive locker. Returns the world-space shelf top.</summary>
+    private static float BuildGreyboxLocker(Transform locker)
+    {
         SetMaterial(Box("Back", locker, new Vector3(0f, 0.9f, 0.225f), new Vector3(0.9f, 1.8f, 0.05f)), LockerBodyMat);
         SetMaterial(Box("Side_L", locker, new Vector3(-0.425f, 0.9f, 0f), new Vector3(0.05f, 1.8f, 0.5f)), LockerBodyMat);
         SetMaterial(Box("Side_R", locker, new Vector3(0.425f, 0.9f, 0f), new Vector3(0.05f, 1.8f, 0.5f)), LockerBodyMat);
@@ -178,7 +226,7 @@ public static class StaffRoomBuilder
         pivot.localRotation = Quaternion.identity;
         pivot.localScale = Vector3.one;
 
-        Transform door = Ensure("LockerDoor", pivot).transform;
+        Transform door = Ensure("LockerDoor", pivot);
         door.localPosition = new Vector3(0.43f, 0f, 0f);
         door.localRotation = Quaternion.identity;
         door.localScale = new Vector3(0.86f, 1.7f, 0.04f);
@@ -191,17 +239,305 @@ public static class StaffRoomBuilder
                           new Vector3(0.55f, 0.025f, 0.35f)), LockerBodyMat);
         }
 
-        // Contents - physically inside the locker, hidden by the door collider.
+        return locker.position.y + 1.165f;
+    }
+
+    /// <summary>
+    /// Swaps in the real Low-Poly locker. The shipped mesh has no separate door
+    /// object - shell and front slab are a single lump - so this peels the slab
+    /// off at <see cref="DoorSeamZ"/> into a static <c>Body</c> plus a hinged
+    /// <c>Door</c> hanging off the <c>DoorPivot</c> that Locker.cs animates.
+    /// Returns the world-space top of the shelf baked into the model.
+    /// </summary>
+    private static float BuildRealLocker(Transform locker, string assetTag)
+    {
+        GameObject source = AssetDatabase.LoadAssetAtPath<GameObject>(RealLockerSource);
+        Mesh sourceMesh = null;
+        Material sourceMat = null;
+        if (source != null)
+        {
+            MeshFilter filter = source.GetComponentInChildren<MeshFilter>();
+            Renderer renderer = source.GetComponentInChildren<Renderer>();
+            if (filter != null) sourceMesh = filter.sharedMesh;
+            if (renderer != null) sourceMat = renderer.sharedMaterial;
+        }
+
+        if (sourceMesh == null)
+        {
+            Debug.LogWarning("[StaffRoomBuilder] " + RealLockerSource
+                             + " missing or meshless - falling back to the greybox locker.", locker);
+            return BuildGreyboxLocker(locker);
+        }
+
+        Mesh bodyMesh, doorMesh;
+        SplitDoorMesh(sourceMesh, assetTag, out bodyMesh, out doorMesh);
+        Material mat = EnsureDoubleSidedMaterial(sourceMat);
+
+        // Shell - every triangle behind the seam, so its front stays open.
+        Transform body = Ensure("Body", locker);
+        body.localPosition = Vector3.zero;
+        body.localRotation = ModelFlip;
+        body.localScale = Vector3.one;
+        MeshFilter bodyFilter = GetOrAdd<MeshFilter>(body.gameObject);
+        MeshRenderer bodyRend = GetOrAdd<MeshRenderer>(body.gameObject);
+        bodyFilter.sharedMesh = bodyMesh;
+        bodyRend.sharedMaterial = mat;
+
+        // Non-convex MeshCollider: the walls and back stop the player, but the
+        // missing front face lets the interaction ray through to the shelf.
+        if (body.gameObject.GetComponent<Collider>() == null)
+            body.gameObject.AddComponent<MeshCollider>().sharedMesh = bodyMesh;
+
+        // Door - DoorPivot sits on the hinge axis, Door cancels that transform so
+        // the slab starts exactly where it did in the source mesh.
+        Vector3 hinge = ModelFlip * DoorHinge;
+        Transform pivot = Ensure("DoorPivot", locker);
+        pivot.localPosition = hinge;
+        pivot.localRotation = Quaternion.identity;
+        pivot.localScale = Vector3.one;
+
+        Transform door = Ensure("Door", pivot);
+        door.localPosition = -hinge;
+        door.localRotation = ModelFlip;
+        door.localScale = Vector3.one;
+        MeshFilter doorFilter = GetOrAdd<MeshFilter>(door.gameObject);
+        MeshRenderer doorRend = GetOrAdd<MeshRenderer>(door.gameObject);
+        doorFilter.sharedMesh = doorMesh;
+        doorRend.sharedMaterial = mat;
+
+        // A BoxCollider, not a MeshCollider: this one has to block the ray while shut.
+        if (door.gameObject.GetComponent<Collider>() == null)
+        {
+            BoxCollider box = door.gameObject.AddComponent<BoxCollider>();
+            box.center = doorMesh.bounds.center;
+            box.size = doorMesh.bounds.size;
+        }
+
+        return locker.position.y + RealShelfLocalY;
+    }
+
+    /// <summary>
+    /// Splits the merged locker mesh in two along <c>seamZ</c>. A triangle belongs
+    /// to the door only when its lowest vertex clears the seam, which keeps the
+    /// side/top/bottom walls (they span the full depth) in the shell while the
+    /// front slab - face, vents and handle together - leaves as one piece.
+    /// The halves are written to <c>Assets/Models/Lockers</c> as mesh assets.
+    /// </summary>
+    private static void SplitDoorMesh(Mesh source, string assetTag, out Mesh body, out Mesh door)
+    {
+        Vector3[] verts = source.vertices;
+        Vector3[] norms = source.normals;
+        Vector2[] uvs = source.uv;
+        Vector4[] tangents = source.tangents;
+        int[] tris = source.triangles;
+        bool hasNorms = norms != null && norms.Length == verts.Length;
+        bool hasUvs = uvs != null && uvs.Length == verts.Length;
+        bool hasTangents = tangents != null && tangents.Length == verts.Length;
+
+        var bPos = new System.Collections.Generic.List<Vector3>();
+        var bNrm = new System.Collections.Generic.List<Vector3>();
+        var bUv = new System.Collections.Generic.List<Vector2>();
+        var bTan = new System.Collections.Generic.List<Vector4>();
+        var bIdx = new System.Collections.Generic.List<int>();
+        var bMap = new System.Collections.Generic.Dictionary<int, int>();
+
+        var dPos = new System.Collections.Generic.List<Vector3>();
+        var dNrm = new System.Collections.Generic.List<Vector3>();
+        var dUv = new System.Collections.Generic.List<Vector2>();
+        var dTan = new System.Collections.Generic.List<Vector4>();
+        var dIdx = new System.Collections.Generic.List<int>();
+        var dMap = new System.Collections.Generic.Dictionary<int, int>();
+
+        for (int t = 0; t < tris.Length; t += 3)
+        {
+            int i0 = tris[t], i1 = tris[t + 1], i2 = tris[t + 2];
+            float lowest = Mathf.Min(verts[i0].z, Mathf.Min(verts[i1].z, verts[i2].z));
+
+            if (lowest > DoorSeamZ)
+                AddTriangle(i0, i1, i2, verts, norms, uvs, tangents, hasNorms, hasUvs, hasTangents,
+                            dPos, dNrm, dUv, dTan, dIdx, dMap);
+            else
+                AddTriangle(i0, i1, i2, verts, norms, uvs, tangents, hasNorms, hasUvs, hasTangents,
+                            bPos, bNrm, bUv, bTan, bIdx, bMap);
+        }
+
+        body = BuildMesh(assetTag + "_Shell", bPos, bNrm, bUv, bTan, bIdx, hasNorms);
+        door = BuildMesh(assetTag + "_Door", dPos, dNrm, dUv, dTan, dIdx, hasNorms);
+
+        EnsureFolder(SplitDir);
+        WriteMeshAsset(body, SplitDir + "/" + assetTag + "_Shell.asset");
+        WriteMeshAsset(door, SplitDir + "/" + assetTag + "_Door.asset");
+    }
+
+    private static void AddTriangle(int i0, int i1, int i2,
+                                    Vector3[] verts, Vector3[] norms, Vector2[] uvs, Vector4[] tangents,
+                                    bool hasNorms, bool hasUvs, bool hasTangents,
+                                    System.Collections.Generic.List<Vector3> pos,
+                                    System.Collections.Generic.List<Vector3> nrm,
+                                    System.Collections.Generic.List<Vector2> uv,
+                                    System.Collections.Generic.List<Vector4> tan,
+                                    System.Collections.Generic.List<int> idx,
+                                    System.Collections.Generic.Dictionary<int, int> map)
+    {
+        int[] src = { i0, i1, i2 };
+        for (int k = 0; k < 3; k++)
+        {
+            int oldIndex = src[k];
+            int newIndex;
+            if (map.TryGetValue(oldIndex, out newIndex)) { idx.Add(newIndex); continue; }
+
+            newIndex = pos.Count;
+            pos.Add(verts[oldIndex]);
+            if (hasNorms) nrm.Add(norms[oldIndex]);
+            if (hasUvs) uv.Add(uvs[oldIndex]);
+            if (hasTangents) tan.Add(tangents[oldIndex]);
+            map.Add(oldIndex, newIndex);
+            idx.Add(newIndex);
+        }
+    }
+
+    private static Mesh BuildMesh(string name,
+                                  System.Collections.Generic.List<Vector3> pos,
+                                  System.Collections.Generic.List<Vector3> nrm,
+                                  System.Collections.Generic.List<Vector2> uv,
+                                  System.Collections.Generic.List<Vector4> tan,
+                                  System.Collections.Generic.List<int> idx,
+                                  bool hasNorms)
+    {
+        Mesh mesh = new Mesh();
+        mesh.name = name;
+        mesh.indexFormat = pos.Count > 65535
+            ? UnityEngine.Rendering.IndexFormat.UInt32
+            : UnityEngine.Rendering.IndexFormat.UInt16;
+        mesh.SetVertices(pos);
+        if (nrm.Count == pos.Count) mesh.SetNormals(nrm);
+        if (uv.Count == pos.Count) mesh.SetUVs(0, uv);
+        if (tan.Count == pos.Count) mesh.SetTangents(tan);
+        mesh.SetTriangles(idx, 0);
+        mesh.RecalculateBounds();
+        if (!hasNorms || nrm.Count != pos.Count) mesh.RecalculateNormals();
+        return mesh;
+    }
+
+    private static void WriteMeshAsset(Mesh mesh, string path)
+    {
+        if (AssetDatabase.LoadAssetAtPath<Mesh>(path) != null) AssetDatabase.DeleteAsset(path);
+        AssetDatabase.CreateAsset(mesh, path);
+    }
+
+    /// <summary>
+    /// Once the door swings open you are looking at the inside of the shell, and
+    /// every wall there is back-facing - culling would make the locker see-through.
+    /// Copies the package material with culling off rather than editing the original.
+    /// </summary>
+    private static Material EnsureDoubleSidedMaterial(Material source)
+    {
+        string path = SplitDir + "/Locker_DoubleSided.mat";
+        Material existing = AssetDatabase.LoadAssetAtPath<Material>(path);
+        if (existing != null) return existing;
+
+        EnsureFolder(SplitDir);
+        Material material = source != null
+            ? new Material(source)
+            : new Material(Shader.Find("Universal Render Pipeline/Lit"));
+        material.name = "Locker_DoubleSided";
+        if (material.HasProperty("_Cull")) material.SetInt("_Cull", 0);
+        AssetDatabase.CreateAsset(material, path);
+        return material;
+    }
+
+    private static T GetOrAdd<T>(GameObject go) where T : Component
+    {
+        T component = go.GetComponent<T>();
+        return component != null ? component : go.AddComponent<T>();
+    }
+
+    private static void EnsureFolder(string path)
+    {
+        if (AssetDatabase.IsValidFolder(path)) return;
+        string parent = path.Substring(0, path.LastIndexOf('/'));
+        string leaf = path.Substring(path.LastIndexOf('/') + 1);
+        if (!AssetDatabase.IsValidFolder(parent)) EnsureFolder(parent);
+        AssetDatabase.CreateFolder(parent, leaf);
+    }
+
+    /// <summary>
+    /// The folded uniform resting on the locker shelf. Nabil's is the real
+    /// folded-shirt model; Malak's stays a simple folded slab until hers is
+    /// modelled separately. Either way the object is named "Uniform", sits
+    /// inside the locker so the closed door hides it, and returns the
+    /// GameObject the PickupItem belongs on.
+    /// </summary>
+    private static GameObject BuildUniform(Transform locker, bool useModel, float shelfTop)
+    {
+        if (useModel)
+        {
+            // The real locker's interior is 0.45 m wide and 0.37 m deep, so the shirt
+            // sits a little back from centre to clear the door on its inner face.
+            GameObject shirt = Prefab(FoldedShirtPrefab, locker,
+                                      new Vector3(0f, shelfTop - locker.position.y, 0.011f),
+                                      Vector3.zero, new Vector3(ShirtScale, ShirtScale, ShirtScale));
+            if (shirt != null)
+            {
+                shirt.name = "Uniform";
+                RestOnShelf(shirt, shelfTop);
+                EnsureBoxCollider(shirt);
+                return shirt;
+            }
+
+            Debug.LogWarning("[StaffRoomBuilder] Folded shirt missing - falling back to a grey slab.", locker);
+        }
+
         SetMaterial(Box("Uniform", locker, new Vector3(0f, 1.22f, 0.05f),
                         new Vector3(0.36f, 0.1f, 0.3f)), BeigeMat);
+        RestOnShelf(locker.Find("Uniform").gameObject, shelfTop);
+        return locker.Find("Uniform").gameObject;
+    }
 
-        PickupItem pickup = locker.Find("Uniform").gameObject.AddComponent<PickupItem>();
-        SetEnum(pickup, "kind", pickupKind);
+    /// <summary>
+    /// Drops the object so its lowest point sits exactly on the shelf top.
+    /// The shirt is authored around y 0.71..1.00, so its pivot floats below it
+    /// - reading the bounds beats hard-coding an offset that breaks on reimport.
+    /// </summary>
+    private static void RestOnShelf(GameObject item, float shelfTop)
+    {
+        Renderer itemRenderer = item.GetComponentInChildren<Renderer>();
+        if (itemRenderer == null) return;
 
-        Locker component = locker.gameObject.AddComponent<Locker>();
-        SetEnum(component, "owner", ownerIndex);
-        SetString(component, "ownerName", ownerName);
-        locker.gameObject.AddComponent<AudioSource>();
+        item.transform.position += new Vector3(0f, shelfTop - itemRenderer.bounds.min.y, 0f);
+    }
+
+    /// <summary>The imported OBJ has no collider, and the interaction raycast needs one.</summary>
+    private static void EnsureBoxCollider(GameObject host)
+    {
+        if (host.GetComponentInChildren<Collider>(true) != null) return;
+
+        MeshFilter filter = host.GetComponentInChildren<MeshFilter>();
+        if (filter == null || filter.sharedMesh == null) return;
+
+        BoxCollider box = filter.gameObject.AddComponent<BoxCollider>();
+        box.center = filter.sharedMesh.bounds.center;
+        box.size = filter.sharedMesh.bounds.size;
+    }
+
+    /// <summary>
+    /// Adds one BoxCollider on 'host' covering every Renderer underneath it.
+    /// Assumes host has no rotation and uniform scale 1 (true for everything
+    /// this builder places), so world bounds can be used directly.
+    /// </summary>
+    private static void AddCombinedBoxCollider(GameObject host)
+    {
+        if (host.GetComponentInChildren<Collider>(true) != null) return;
+
+        Renderer[] renderers = host.GetComponentsInChildren<Renderer>(true);
+        if (renderers.Length == 0) return;
+
+        Bounds bounds = renderers[0].bounds;
+        for (int i = 1; i < renderers.Length; i++) bounds.Encapsulate(renderers[i].bounds);
+
+        BoxCollider box = host.AddComponent<BoxCollider>();
+        box.center = bounds.center - host.transform.position;
+        box.size = bounds.size;
     }
 
     // ---------------------------------------------------------- cleaning kit
@@ -209,27 +545,16 @@ public static class StaffRoomBuilder
     {
         Transform items = Ensure("Items", root);
 
-        Transform box = Ensure("CleaningBox", items);
-        box.localPosition = new Vector3(0.45f, 0f, 1.7f);
-        box.localRotation = Quaternion.identity;
-        box.localScale = Vector3.one;
-
-        SetMaterial(Box("Body", box, new Vector3(0f, 0.25f, 0f), new Vector3(0.55f, 0.5f, 0.45f)), BrownMat);
-        SetMaterial(Box("Flap", box, new Vector3(0f, 0.47f, -0.26f), new Vector3(0.55f, 0.14f, 0.03f)), BrownMat);
-        SetMaterial(Cyl("Bottle_A", box, new Vector3(0.13f, 0.6f, 0.08f), new Vector3(0.09f, 0.11f, 0.09f)), GreenMat);
-        SetMaterial(Cyl("Bottle_B", box, new Vector3(-0.14f, 0.57f, -0.02f), new Vector3(0.08f, 0.09f, 0.08f)), RedMat);
-        SetMaterial(Box("Rags", box, new Vector3(0f, 0.52f, 0.15f), new Vector3(0.24f, 0.05f, 0.16f)), BeigeMat);
-
-        box.gameObject.AddComponent<PickupItem>();   // kind defaults to CleaningKit
-
-        // Mop + bucket, pure set dressing.
-        Transform mop = Ensure("Mop", items);
-        mop.localPosition = new Vector3(-2.78f, 0f, -2.0f);
-        SetMaterial(Cyl("Handle", mop, new Vector3(0f, 0.85f, 0f), new Vector3(0.035f, 0.85f, 0.035f)), BrownMat);
-        SetMaterial(Cyl("Head", mop, new Vector3(0f, 0.07f, 0f), new Vector3(0.16f, 0.07f, 0.16f)), BeigeMat);
-
-        SetMaterial(Cyl("Bucket", items, new Vector3(-2.45f, 0.16f, -1.75f),
-                        new Vector3(0.32f, 0.16f, 0.32f)), RedMat);
+        // Real cleaning cart model - replaces the old box + mop + bucket primitives
+        // and already reads as a housekeeper's cart on its own.
+        GameObject cart = Prefab(CleaningCartSource, items,
+                                 new Vector3(-2.2f, 0f, -1.85f), Vector3.zero, Vector3.one);
+        if (cart != null)
+        {
+            cart.name = "CleaningCart";
+            AddCombinedBoxCollider(cart);
+            cart.AddComponent<PickupItem>();   // kind defaults to CleaningKit
+        }
     }
 
     // -------------------------------------------------------------- furniture
@@ -271,25 +596,23 @@ public static class StaffRoomBuilder
         float cz = bounds.center.z;
         float halfDepth = bounds.size.z * 0.5f;
 
-        // Radio - front of the desk, easy to spot from the door.
-        Transform radio = Ensure("Radio", props);
-        radio.localPosition = new Vector3(cx, top, cz - halfDepth * 0.25f);
-        radio.localRotation = Quaternion.identity;
-        radio.localScale = Vector3.one;
+        // Radio - the real AK Studio Art prop, front of the desk, easy to spot from the door.
+        GameObject radio = Prefab(RadioPrefab, props,
+                                  new Vector3(cx, top, cz - halfDepth * 0.25f), Vector3.zero, Vector3.one);
+        if (radio != null)
+        {
+            radio.name = "Radio";
+            PickupItem radioPickup = radio.AddComponent<PickupItem>();
+            SetEnum(radioPickup, "kind", 1);   // Radio
+        }
 
-        SetMaterial(Box("Body", radio, new Vector3(0f, 0.11f, 0f), new Vector3(0.34f, 0.22f, 0.13f)), BlackMat);
-        SetMaterial(Box("Face", radio, new Vector3(0f, 0.11f, -0.07f), new Vector3(0.3f, 0.18f, 0.02f)), BeigeMat);
-        SetMaterial(Cyl("Dial", radio, new Vector3(0.11f, 0.11f, -0.085f), new Vector3(0.045f, 0.015f, 0.045f)), MetalMat);
-        SetMaterial(Cyl("Antenna", radio, new Vector3(-0.14f, 0.28f, 0.02f), new Vector3(0.012f, 0.1f, 0.012f)), MetalMat);
-        radio.gameObject.AddComponent<PickupItem>();
-        SetEnum(radio.GetComponent<PickupItem>(), "kind", 1);   // Radio
-
-        SetMaterial(Cyl("Mug", props, new Vector3(cx - 0.4f, top + 0.05f, cz - halfDepth * 0.35f),
-                        new Vector3(0.16f, 0.05f, 0.16f)), RedMat);
-        SetMaterial(Box("Paperwork", props, new Vector3(cx + 0.4f, top + 0.01f, cz - halfDepth * 0.2f),
-                        new Vector3(0.3f, 0.02f, 0.22f)), BeigeMat);
-        SetMaterial(Cyl("PenHolder", props, new Vector3(cx - 0.16f, top + 0.07f, cz + halfDepth * 0.3f),
-                        new Vector3(0.1f, 0.07f, 0.1f)), GreenMat);
+        // Desk clutter - nappin Office Essentials props, pivots sit at their own base.
+        Prefab(OfficePack + "(Prb)Mug.prefab", props,
+               new Vector3(cx - 0.4f, top, cz - halfDepth * 0.35f), Vector3.zero, Vector3.one);
+        Prefab(OfficePack + "(Prb)DocumentHolder.prefab", props,
+               new Vector3(cx + 0.4f, top, cz - halfDepth * 0.2f), Vector3.zero, Vector3.one);
+        Prefab(OfficePack + "(Prb)PenHolder.prefab", props,
+               new Vector3(cx - 0.16f, top, cz + halfDepth * 0.3f), Vector3.zero, Vector3.one);
     }
 
     // ---------------------------------------------------------- wall details

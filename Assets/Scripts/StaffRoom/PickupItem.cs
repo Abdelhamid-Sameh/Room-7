@@ -12,7 +12,11 @@ public enum PickupKind
     /// <summary>Nabil's own uniform - taking it means he puts it on.</summary>
     WearUniform,
 
-    /// <summary>Malak's uniform. Looked at, never taken - it is a clue.</summary>
+    /// <summary>
+    /// Malak's uniform. A clue, not an item - interacting picks it up to the
+    /// centre of the screen (see CarrySystem) and interacting again puts it
+    /// back exactly where it was.
+    /// </summary>
     InspectMalakUniform
 }
 
@@ -20,8 +24,11 @@ public enum PickupKind
 /// One-shot interaction that writes a flag into GameState and updates the HUD.
 /// Add a new PickupKind, handle it in Take() and it appears in the inventory
 /// read-out automatically.
+///
+/// PickupKind.InspectMalakUniform is the odd one out - instead of vanishing
+/// into the inventory it implements ICarryable and toggles via CarrySystem.
 /// </summary>
-public class PickupItem : Interactable
+public class PickupItem : Interactable, ICarryable
 {
     [SerializeField] private PickupKind kind = PickupKind.CleaningKit;
 
@@ -43,6 +50,9 @@ public class PickupItem : Interactable
     {
         get
         {
+            if (kind == PickupKind.InspectMalakUniform)
+                return IsHeld ? "Put it back" : (string.IsNullOrWhiteSpace(promptOverride) ? "Look at Malak's uniform" : promptOverride);
+
             if (!string.IsNullOrWhiteSpace(promptOverride)) return promptOverride;
 
             switch (kind)
@@ -50,7 +60,6 @@ public class PickupItem : Interactable
                 case PickupKind.CleaningKit: return "Take cleaning supplies";
                 case PickupKind.Radio: return "Take radio";
                 case PickupKind.WearUniform: return "Put on uniform";
-                case PickupKind.InspectMalakUniform: return "Look at Malak's uniform";
                 default: return "Take";
             }
         }
@@ -67,13 +76,21 @@ public class PickupItem : Interactable
                 case PickupKind.CleaningKit: return GameState.HasCleaningKit;
                 case PickupKind.Radio: return GameState.HasRadio;
                 case PickupKind.WearUniform: return GameState.UniformTaken;
-                default: return false;   // clues stay readable
+                default: return false;   // clues stay interactable (toggle hold/put-down)
             }
         }
     }
 
     public override void Interact(PlayerInteraction interactor)
     {
+        if (kind == PickupKind.InspectMalakUniform)
+        {
+            GameState.MalakUniformInspected = true;
+            if (CarrySystem.Instance != null) CarrySystem.Instance.Toggle(this);
+            GameState.RaiseChanged();
+            return;
+        }
+
         if (AlreadyHandled) return;
 
         switch (kind)
@@ -94,11 +111,6 @@ public class PickupItem : Interactable
                 if (activateOnTaken != null) activateOnTaken.SetActive(true);
                 Disappear();
                 break;
-
-            case PickupKind.InspectMalakUniform:
-                // The uniform stays where it is - noticing it is the point.
-                GameState.MalakUniformInspected = true;
-                break;
         }
 
         if (pickupClip != null) AudioSource.PlayClipAtPoint(pickupClip, transform.position);
@@ -113,5 +125,43 @@ public class PickupItem : Interactable
 
         GameObject target = hideOnTaken != null ? hideOnTaken : gameObject;
         target.SetActive(false);
+    }
+
+    // ------------------------------------------------------------ ICarryable --
+
+    public bool IsHeld { get; private set; }
+
+    private Transform originalParent;
+    private Vector3 originalLocalPos;
+    private Quaternion originalLocalRot;
+    private Collider[] carryColliders;
+
+    public void PickUp(Transform holdPoint)
+    {
+        originalParent = transform.parent;
+        originalLocalPos = transform.localPosition;
+        originalLocalRot = transform.localRotation;
+
+        carryColliders = GetComponentsInChildren<Collider>(true);
+        foreach (Collider col in carryColliders) col.enabled = false;
+
+        transform.SetParent(holdPoint, false);
+        transform.localPosition = Vector3.zero;
+        transform.localRotation = Quaternion.identity;
+
+        IsHeld = true;
+    }
+
+    public void PutDown()
+    {
+        transform.SetParent(originalParent, false);
+        transform.localPosition = originalLocalPos;
+        transform.localRotation = originalLocalRot;
+
+        if (carryColliders != null)
+            foreach (Collider col in carryColliders)
+                if (col != null) col.enabled = true;
+
+        IsHeld = false;
     }
 }

@@ -24,11 +24,19 @@ public class HUDController : MonoBehaviour
     private Text clueText;
 
     private GameObject radioPanel;
-    private Text radioText;
+    private Image radioPowerDot;
+    private Text radioTitleText;
+    private Text radioPowerText;
+    private Text radioTrackText;
+    private Text radioPositionText;
+    private Text radioHintText;
 
     private static readonly Color Warm = new Color(0.95f, 0.91f, 0.82f);
     private static readonly Color Dim = new Color(0.55f, 0.53f, 0.47f);
     private static readonly Color Scrim = new Color(0f, 0f, 0f, 0.38f);
+    private static readonly Color Accent = new Color(0.93f, 0.70f, 0.30f);
+    private static readonly Color PowerOn = new Color(0.47f, 0.86f, 0.49f);
+    private static readonly Color PowerOff = new Color(0.40f, 0.38f, 0.34f);
 
     // -------------------------------------------------------------- build --
 
@@ -100,17 +108,62 @@ public class HUDController : MonoBehaviour
         cluePanel.SetActive(false);
     }
 
+    /// <summary>
+    /// A small "cassette player" card: amber top edge, a power dot + ON/OFF,
+    /// the current track name and position, and a key-hint row at the bottom.
+    /// </summary>
     private void BuildRadio()
     {
-        Image panel = NewImage("RadioPanel", transform, Scrim);
+        Image panel = NewImage("RadioPanel", transform, new Color(0.07f, 0.07f, 0.08f, 0.74f));
         Place(panel.rectTransform, new Vector2(1f, 0f), new Vector2(1f, 0f),
-              new Vector2(-28f, 28f), new Vector2(640f, 118f));
+              new Vector2(-28f, 28f), new Vector2(360f, 132f));
         panel.raycastTarget = false;
         radioPanel = panel.gameObject;
 
-        radioText = NewText("Radio", panel.transform, 23, TextAnchor.LowerRight);
-        Fill(radioText.rectTransform, new Vector2(18f, 12f), new Vector2(-18f, -12f));
-        radioText.text = "";
+        // Amber top edge - gives the card a bit of "hardware" identity.
+        Image edge = NewImage("TopEdge", panel.transform, Accent);
+        Place(edge.rectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
+              Vector2.zero, new Vector2(360f, 3f));
+
+        // Header row: RADIO  ................  [dot] ON/OFF
+        radioTitleText = NewText("Title", panel.transform, 17, TextAnchor.UpperLeft);
+        Place(radioTitleText.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f),
+              new Vector2(16f, -12f), new Vector2(140f, 22f));
+        radioTitleText.text = "R A D I O";
+        radioTitleText.color = Dim;
+
+        radioPowerDot = NewImage("PowerDot", panel.transform, PowerOff);
+        Place(radioPowerDot.rectTransform, new Vector2(1f, 1f), new Vector2(1f, 0.5f),
+              new Vector2(-84f, -22f), new Vector2(10f, 10f));
+
+        radioPowerText = NewText("PowerLabel", panel.transform, 17, TextAnchor.UpperRight);
+        Place(radioPowerText.rectTransform, new Vector2(1f, 1f), new Vector2(1f, 1f),
+              new Vector2(-16f, -12f), new Vector2(60f, 22f));
+        radioPowerText.text = "OFF";
+
+        // Track name, big and warm.
+        radioTrackText = NewText("Track", panel.transform, 25, TextAnchor.MiddleLeft);
+        Place(radioTrackText.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f),
+              new Vector2(16f, -42f), new Vector2(260f, 32f));
+        radioTrackText.text = "";
+
+        radioPositionText = NewText("TrackPosition", panel.transform, 15, TextAnchor.MiddleRight);
+        Place(radioPositionText.rectTransform, new Vector2(1f, 1f), new Vector2(1f, 1f),
+              new Vector2(-16f, -46f), new Vector2(60f, 24f));
+        radioPositionText.color = Dim;
+        radioPositionText.text = "";
+
+        // Thin divider.
+        Image divider = NewImage("Divider", panel.transform, new Color(1f, 1f, 1f, 0.08f));
+        Place(divider.rectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
+              new Vector2(0f, -80f), new Vector2(328f, 1f));
+
+        // Key hints.
+        radioHintText = NewText("Hints", panel.transform, 16, TextAnchor.LowerLeft);
+        Place(radioHintText.rectTransform, new Vector2(0f, 0f), new Vector2(0f, 0f),
+              new Vector2(16f, 10f), new Vector2(328f, 26f));
+        radioHintText.color = Dim;
+        radioHintText.text = "[Y] prev      [R] on/off      [T] next";
 
         radioPanel.SetActive(false);
     }
@@ -178,17 +231,23 @@ public class HUDController : MonoBehaviour
         if (!show) return;
 
         RadioController radio = GameSystems.HasInstance ? GameSystems.Instance.Radio : null;
-        string station = radio != null ? radio.StationName : "Static";
-        bool hasAudio = radio != null && radio.HasAudio;
+        bool playing = GameState.RadioPlaying;
 
-        string status;
-        if (!GameState.RadioPlaying) status = "Stopped";
-        else status = hasAudio ? "Playing" : "Playing - no tape loaded";
+        radioPowerDot.color = playing ? PowerOn : PowerOff;
+        radioPowerText.text = playing ? "ON" : "OFF";
+        radioPowerText.color = playing ? PowerOn : Dim;
 
-        radioText.text =
-            $"<color=#F2E9D8>RADIO  -  {station}</color>\n" +
-            $"<color=#B9AE95>{status}</color>\n" +
-            "<color=#857F70>[R] play / pause      [T] next station</color>";
+        if (radio != null && radio.HasAudio)
+        {
+            radioTrackText.text = radio.TrackName;
+            radioPositionText.text = radio.TrackPosition;
+        }
+        else
+        {
+            radioTrackText.text = "No tape loaded";
+            radioPositionText.text = "";
+        }
+        radioTrackText.color = playing ? Warm : Dim;
     }
 
     private void Update()
