@@ -3,27 +3,28 @@ using UnityEngine;
 /// <summary>
 /// The portable radio Nabil picks up in the staff room.
 ///
-/// It is a simple on/off cassette player with a next / previous track
-/// skip - no stations. Playback state lives in GameState so it survives
-/// scene changes; the AudioSource lives on the persistent GameSystems object.
+/// A simple on/off player with next / previous track and a playlist - no stations. Playback state
+/// lives in GameState so it survives scene changes; the AudioSource lives on the persistent
+/// GameSystems object. With more than one track it moves on to the next one by itself when a
+/// track ends; with a single track it loops.
 ///
-/// >>> DROP YOUR AUDIO FILES IN HERE <<<
-/// Assign clips to the "Tracks" list on the GameSystems object in the
-/// Inspector (optionally name them in "Track Names", same length/order).
-/// With an empty list everything still works - the HUD just shows
-/// "No tape loaded" instead of a track name.
+/// Mix: the radio's own level (Volume) x the player's Master and Music levels (AudioLevels).
+/// Playlist: assign clips to "Tracks" on the GameSystems object (and optional display names to
+/// "Track Names", same order). With an empty list the HUD just shows "No tape loaded".
 /// </summary>
 public class RadioController : MonoBehaviour
 {
     [Header("Audio")]
-    [Tooltip("The playlist. Leave empty until the audio arrives.")]
+    [Tooltip("The playlist.")]
     [SerializeField] private AudioClip[] tracks;
 
     [Tooltip("Optional display names, same order as Tracks. Leave empty to show 'Track N'.")]
     [SerializeField] private string[] trackNames;
 
-    [SerializeField, Range(0f, 1f)] private float volume = 0.45f;
+    [Tooltip("The radio's own level. The player's Master and Music sliders multiply it.")]
+    [SerializeField, Range(0f, 1f)] private float volume = 0.2f;
 
+    private static RadioController instance;
     private AudioSource source;
 
     public int TrackCount => tracks != null ? tracks.Length : 0;
@@ -45,16 +46,43 @@ public class RadioController : MonoBehaviour
 
     private void Awake()
     {
+        if (instance != null && instance != this)
+        {
+            // A copy from another scene - the original keeps playing across scene changes.
+            enabled = false;
+            return;
+        }
+
+        instance = this;
+
         source = GetComponent<AudioSource>();
         if (source == null) source = gameObject.AddComponent<AudioSource>();
 
         source.playOnAwake = false;
-        source.loop = true;
         source.spatialBlend = 0f;   // UI-style 2D sound, not positional
-        source.volume = volume;
+        source.loop = TrackCount <= 1;
+        ApplyVolume();
+    }
 
-        // Keep whatever track we had before the last scene change.
+    private void Start()
+    {
+        // Keep whatever state we had before the last scene change.
         Apply();
+    }
+
+    private void OnEnable()
+    {
+        AudioLevels.Changed += ApplyVolume;
+    }
+
+    private void OnDisable()
+    {
+        AudioLevels.Changed -= ApplyVolume;
+    }
+
+    private void OnDestroy()
+    {
+        if (instance == this) instance = null;
     }
 
     private void Update()
@@ -64,6 +92,10 @@ public class RadioController : MonoBehaviour
         if (GameInput.RadioPlayPressed) TogglePower();
         else if (GameInput.RadioNextPressed) NextTrack();
         else if (GameInput.RadioPrevPressed) PreviousTrack();
+
+        // A track just ran out: move on to the next one.
+        if (GameState.RadioPlaying && TrackCount > 1 && source != null && source.clip != null && !source.isPlaying)
+            NextTrack();
     }
 
     /// <summary>R - on / off.</summary>
@@ -97,6 +129,8 @@ public class RadioController : MonoBehaviour
     {
         if (source == null) return;
 
+        source.loop = TrackCount <= 1;
+
         if (!GameState.RadioPlaying || !HasAudio)
         {
             source.Stop();
@@ -107,8 +141,13 @@ public class RadioController : MonoBehaviour
         if (source.clip != tracks[index] || !source.isPlaying)
         {
             source.clip = tracks[index];
-            source.volume = volume;
+            ApplyVolume();
             source.Play();
         }
+    }
+
+    private void ApplyVolume()
+    {
+        if (source != null) source.volume = volume * AudioLevels.MusicVolume;
     }
 }

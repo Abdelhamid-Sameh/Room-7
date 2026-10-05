@@ -59,7 +59,7 @@ public static class StaffRoomBuilder
     private static readonly Quaternion ModelFlip = Quaternion.Euler(0f, 180f, 0f);
 
     /// <summary>Top of the shelf baked into the model, in source-mesh space.</summary>
-    private const float RealShelfLocalY = -0.02f;
+    private const float RealShelfLocalY = 0.66f;
 
     /// <summary>
     /// The Office Essentials pack still ships Built-in "Standard" shader
@@ -89,6 +89,11 @@ public static class StaffRoomBuilder
             Debug.LogError($"[StaffRoomBuilder] Open {StaffRoomScene} first (active: '{scene.path}').");
             return;
         }
+
+        if (!EditorUtility.DisplayDialog("Rebuild the staff room?",
+                "This wipes everything under StaffRoom_Root, including any props you moved or replaced by hand, and rebuilds it from code. Continue only if you want that.",
+                "Rebuild", "Cancel"))
+            return;
 
         Transform root = Ensure(RootName, null);
         ClearChildren(root);

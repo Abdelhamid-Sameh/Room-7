@@ -13,20 +13,18 @@ public enum PickupKind
     WearUniform,
 
     /// <summary>
-    /// Malak's uniform. A clue, not an item - interacting picks it up to the
-    /// centre of the screen (see CarrySystem) and interacting again puts it
-    /// back exactly where it was.
+    /// Malak's uniform. A clue, not an item - interacting picks it up to the centre of the screen
+    /// (see CarrySystem) and interacting again puts it back exactly where it was.
     /// </summary>
     InspectMalakUniform
 }
 
 /// <summary>
-/// One-shot interaction that writes a flag into GameState and updates the HUD.
-/// Add a new PickupKind, handle it in Take() and it appears in the inventory
-/// read-out automatically.
+/// One-shot interaction that writes a flag into GameState and updates the HUD. Anything already
+/// taken stays gone when the scene is loaded again (GameState remembers it).
 ///
-/// PickupKind.InspectMalakUniform is the odd one out - instead of vanishing
-/// into the inventory it implements ICarryable and toggles via CarrySystem.
+/// PickupKind.InspectMalakUniform is the odd one out - instead of vanishing into the inventory it
+/// implements ICarryable and toggles via CarrySystem, and records a clue the first time.
 /// </summary>
 public class PickupItem : Interactable, ICarryable
 {
@@ -43,6 +41,10 @@ public class PickupItem : Interactable, ICarryable
 
     [Header("Audio (optional)")]
     [SerializeField] private AudioClip pickupClip;
+
+    [Header("Carrying")]
+    [Tooltip("Rotation relative to the camera while held. -90 on X turns a flat item to face the player.")]
+    [SerializeField] private Vector3 heldEuler = new Vector3(-90f, 0f, 0f);
 
     public PickupKind Kind => kind;
 
@@ -81,11 +83,23 @@ public class PickupItem : Interactable, ICarryable
         }
     }
 
+    private void Start()
+    {
+        // Back from another scene: anything already taken must stay taken.
+        if (kind == PickupKind.InspectMalakUniform || !AlreadyHandled) return;
+
+        if (kind == PickupKind.WearUniform && GameState.UniformWorn && activateOnTaken != null)
+            activateOnTaken.SetActive(true);
+
+        Disappear();
+    }
+
     public override void Interact(PlayerInteraction interactor)
     {
         if (kind == PickupKind.InspectMalakUniform)
         {
             GameState.MalakUniformInspected = true;
+            GameState.AddClue(GameState.ClueMalakUniform);   // flashes once, then lives in the clue log
             if (CarrySystem.Instance != null) CarrySystem.Instance.Toggle(this);
             GameState.RaiseChanged();
             return;
@@ -113,7 +127,7 @@ public class PickupItem : Interactable, ICarryable
                 break;
         }
 
-        if (pickupClip != null) AudioSource.PlayClipAtPoint(pickupClip, transform.position);
+        AudioLevels.PlaySfx(pickupClip, transform.position);
 
         GameState.RaiseChanged();
     }
@@ -147,7 +161,7 @@ public class PickupItem : Interactable, ICarryable
 
         transform.SetParent(holdPoint, false);
         transform.localPosition = Vector3.zero;
-        transform.localRotation = Quaternion.identity;
+        transform.localRotation = Quaternion.Euler(heldEuler);
 
         IsHeld = true;
     }

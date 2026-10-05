@@ -1,3 +1,4 @@
+using TMPro;
 using UnityEngine;
 
 /// <summary>
@@ -16,6 +17,10 @@ public class GameSystems : MonoBehaviour
 
     [Header("Scene fade")]
     [SerializeField] private float fadeDuration = 0.45f;
+
+    [Header("HUD")]
+    [Tooltip("Font for every HUD label. Use the Cairo SDF asset so Arabic text (radio track names, clues) shows correctly.")]
+    [SerializeField] private TMP_FontAsset hudFont;
 
     public SceneFader Fader { get; private set; }
     public HUDController HUD { get; private set; }
@@ -95,7 +100,7 @@ public class GameSystems : MonoBehaviour
     {
         GameObject canvasGO = NewCanvas("HUD", 800);
         HUD = canvasGO.AddComponent<HUDController>();
-        HUD.Build();
+        HUD.Build(hudFont);
     }
 
     private GameObject NewCanvas(string name, int sortingOrder)

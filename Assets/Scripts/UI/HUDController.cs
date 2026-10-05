@@ -1,52 +1,115 @@
+using RTLTMPro;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-/// Screen furniture: crosshair, contextual prompt, inventory read-out, clue
-/// line and the carried-radio widget.
+/// Screen furniture: crosshair, contextual prompt, task list, clue toast and the carried-radio widget.
 ///
-/// Everything here is built from code (see Build) so no scene wiring is
-/// needed and the layout can be re-skinned in one file. Replace the generated
-/// hierarchy with a designer-made prefab whenever the UI gets its final look.
+/// The tasks, clue and radio cards are all made by NewCard, so they share one look: dark translucent
+/// plate, amber top edge, spaced-out grey title. Change CardScale to resize all three at once.
+///
+/// All text is TextMesh Pro with the font passed to Build, so Arabic works (RTL Text Mesh Pro is used
+/// for anything whose text can come from the story or the music files).
+///
+/// Tasks: a completed task stays on the list, ticked; the next task appears after one is completed.
+/// Add or reorder tasks in BuildTasks. Clues: each new clue (GameState.AddClue) is shown once, then
+/// fades away; the full list lives in GameState.Clues for the pause-menu journal later.
+///
+/// Everything is built from code (see Build) so no scene wiring is needed.
 /// </summary>
 public class HUDController : MonoBehaviour
 {
-    private static Font cachedFont;
+    /// <summary>1 = the sizes written below, 1.2 = 20% bigger. Applies to tasks, clue and radio.</summary>
+    private const float CardScale = 1.2f;
+
+    private const float CardWidth = 360f;
+    private const float TaskFirstY = -52f;
+    private const float TaskStep = 30f;
+
+    private const float ClueFadeIn = 0.35f;
+    private const float ClueHold = 6f;
+    private const float ClueFadeOut = 1.2f;
+
+    private TMP_FontAsset font;
 
     private Image crosshair;
     private float crosshairTarget = 1f;
 
     private GameObject promptPanel;
-    private Text promptText;
+    private TMP_Text promptText;
 
-    private Text inventoryText;
+    private class TaskDef
+    {
+        public string Label;
+        public System.Func<bool> IsDone;
+    }
+
+    private class TaskRow
+    {
+        public TaskDef Def;
+        public RectTransform Root;
+        public CanvasGroup Group;
+        public Image Outer;
+        public Image Inner;
+        public GameObject Tick;
+        public TMP_Text Label;
+        public bool Done;
+        public bool Visible;
+        public bool Placed;
+        public float RevealAt;
+        public float Alpha;
+        public float Y;
+        public float Pop;
+    }
+
+    private RectTransform tasksCard;
+    private TaskRow[] taskRows;
+    private bool tasksInitialized;
+    private float tasksCardHeight;
+
     private GameObject cluePanel;
-    private Text clueText;
+    private CanvasGroup clueGroup;
+    private TMP_Text clueText;
+    private float clueTime = -1f;
 
     private GameObject radioPanel;
     private Image radioPowerDot;
-    private Text radioTitleText;
-    private Text radioPowerText;
-    private Text radioTrackText;
-    private Text radioPositionText;
-    private Text radioHintText;
+    private TMP_Text radioPowerText;
+    private TMP_Text radioTrackText;
+    private TMP_Text radioPositionText;
 
     private static readonly Color Warm = new Color(0.95f, 0.91f, 0.82f);
     private static readonly Color Dim = new Color(0.55f, 0.53f, 0.47f);
-    private static readonly Color Scrim = new Color(0f, 0f, 0f, 0.38f);
+    private static readonly Color CardBg = new Color(0.07f, 0.07f, 0.08f, 0.74f);
+    private static readonly Color BoxFill = new Color(0.07f, 0.07f, 0.08f, 1f);
     private static readonly Color Accent = new Color(0.93f, 0.70f, 0.30f);
+    private static readonly Color ClueTint = new Color(0.93f, 0.78f, 0.48f);
     private static readonly Color PowerOn = new Color(0.47f, 0.86f, 0.49f);
     private static readonly Color PowerOff = new Color(0.40f, 0.38f, 0.34f);
 
     // -------------------------------------------------------------- build --
 
-    public void Build()
+    /// <summary>Builds the whole HUD. 'fontAsset' is the TMP font used for every label (Cairo SDF).</summary>
+    public void Build(TMP_FontAsset fontAsset)
     {
+        font = fontAsset;
+
         BuildCrosshair();
         BuildPrompt();
-        BuildInventory();
+        BuildTasks();
         BuildClue();
         BuildRadio();
+    }
+
+    private void OnEnable()
+    {
+        GameState.ClueAdded += ShowClue;
+    }
+
+    private void OnDisable()
+    {
+        GameState.ClueAdded -= ShowClue;
     }
 
     private void BuildCrosshair()
@@ -54,24 +117,21 @@ public class HUDController : MonoBehaviour
         Image dot = NewImage("Crosshair", transform, Warm);
         Place(dot.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
               Vector2.zero, new Vector2(9f, 9f));
-        dot.raycastTarget = false;
         crosshair = dot;
     }
 
     private void BuildPrompt()
     {
-        Image panel = NewImage("PromptPanel", transform, Scrim);
-        Place(panel.rectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f),
-              new Vector2(0f, 175f), new Vector2(1100f, 66f));
-        panel.raycastTarget = false;
-        promptPanel = panel.gameObject;
+        RectTransform card = NewCard("PromptCard", new Vector2(0.5f, 0f), new Vector2(0.5f, 0f),
+                                     new Vector2(0f, 175f), new Vector2(640f, 62f), null, 1f);
+        promptPanel = card.gameObject;
 
-        promptText = NewText("Prompt", panel.transform, 30, TextAnchor.MiddleCenter);
-        Fill(promptText.rectTransform, new Vector2(20f, 4f), new Vector2(-20f, -4f));
+        promptText = NewText("Prompt", card, 30, TextAlignmentOptions.Center, true);
+        Fill(promptText.rectTransform, new Vector2(20f, 4f), new Vector2(-20f, -6f));
         promptText.text = "";
 
         // Static control reminder, always visible.
-        Text hint = NewText("Controls", transform, 20, TextAnchor.MiddleCenter);
+        TMP_Text hint = NewText("Controls", transform, 20, TextAlignmentOptions.Center, false);
         Place(hint.rectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f),
               new Vector2(0f, 122f), new Vector2(900f, 40f));
         hint.text = "E  /  Left Click - interact";
@@ -80,97 +140,133 @@ public class HUDController : MonoBehaviour
         promptPanel.SetActive(false);
     }
 
-    private void BuildInventory()
+    /// <summary>
+    /// Top-left task list. A task is shown ticked once done, and the next one appears when the
+    /// current one is completed. Tasks can be done in any order; the first unfinished one is the
+    /// current task.
+    /// </summary>
+    private void BuildTasks()
     {
-        Image panel = NewImage("InventoryPanel", transform, Scrim);
-        Place(panel.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f),
-              new Vector2(28f, -28f), new Vector2(430f, 142f));
-        panel.raycastTarget = false;
+        tasksCard = NewCard("TasksCard", new Vector2(0f, 1f), new Vector2(0f, 1f),
+                            new Vector2(28f, -28f), new Vector2(CardWidth, 78f), "T A S K S", CardScale);
+        tasksCardHeight = 78f;
 
-        inventoryText = NewText("Inventory", panel.transform, 24, TextAnchor.UpperLeft);
-        Fill(inventoryText.rectTransform, new Vector2(18f, 14f), new Vector2(-14f, -12f));
-        inventoryText.text = "";
+        // Add or reorder tasks here. Order = the order they are revealed in.
+        TaskDef[] defs =
+        {
+            new TaskDef { Label = "Put on your uniform",         IsDone = () => GameState.UniformWorn },
+            new TaskDef { Label = "Take the cleaning supplies",  IsDone = () => GameState.HasCleaningKit },
+            new TaskDef { Label = "Take the radio",              IsDone = () => GameState.HasRadio },
+        };
+
+        taskRows = new TaskRow[defs.Length];
+        for (int i = 0; i < defs.Length; i++)
+            taskRows[i] = BuildTaskRow(tasksCard, defs[i]);
     }
 
+    private TaskRow BuildTaskRow(RectTransform parent, TaskDef def)
+    {
+        TaskRow row = new TaskRow { Def = def };
+
+        GameObject rootGo = new GameObject("Task", typeof(RectTransform), typeof(CanvasGroup));
+        rootGo.transform.SetParent(parent, false);
+        row.Root = (RectTransform)rootGo.transform;
+        Place(row.Root, new Vector2(0f, 1f), new Vector2(0f, 0.5f), new Vector2(0f, TaskFirstY), new Vector2(CardWidth, 26f));
+        row.Group = rootGo.GetComponent<CanvasGroup>();
+        row.Group.alpha = 0f;
+
+        row.Outer = NewImage("Box", row.Root, Dim);
+        Place(row.Outer.rectTransform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f),
+              new Vector2(16f, 0f), new Vector2(18f, 18f));
+
+        row.Inner = NewImage("Fill", row.Outer.transform, BoxFill);
+        Fill(row.Inner.rectTransform, new Vector2(2f, 2f), new Vector2(-2f, -2f));
+
+        // Tick mark drawn from two thin bars so no special font glyph is needed.
+        row.Tick = new GameObject("Tick", typeof(RectTransform));
+        row.Tick.transform.SetParent(row.Outer.transform, false);
+        Fill((RectTransform)row.Tick.transform, Vector2.zero, Vector2.zero);
+        Stroke(row.Tick.transform, new Vector2(-3.5f, -1.5f), new Vector2(6f, 2.4f), -45f);
+        Stroke(row.Tick.transform, new Vector2(1.5f, 0.5f), new Vector2(10.5f, 2.4f), 45f);
+        row.Tick.SetActive(false);
+
+        row.Label = NewText("Label", row.Root, 22, TextAlignmentOptions.Left, true);
+        Place(row.Label.rectTransform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f),
+              new Vector2(46f, 0f), new Vector2(300f, 26f));
+        row.Label.text = def.Label;
+
+        rootGo.SetActive(false);
+        return row;
+    }
+
+    /// <summary>A short note that fades in, stays a few seconds and fades out. See ShowClue.</summary>
     private void BuildClue()
     {
-        Image panel = NewImage("CluePanel", transform, Scrim);
-        Place(panel.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f),
-              new Vector2(28f, -182f), new Vector2(720f, 76f));
-        panel.raycastTarget = false;
-        cluePanel = panel.gameObject;
+        RectTransform card = NewCard("ClueCard", new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
+                                     new Vector2(0f, -36f), new Vector2(560f, 100f), "C L U E", CardScale);
+        cluePanel = card.gameObject;
+        clueGroup = cluePanel.AddComponent<CanvasGroup>();
+        clueGroup.alpha = 0f;
 
-        clueText = NewText("Clue", panel.transform, 21, TextAnchor.MiddleLeft);
-        Fill(clueText.rectTransform, new Vector2(18f, 6f), new Vector2(-18f, -6f));
+        clueText = NewText("Clue", card, 22, TextAlignmentOptions.TopLeft, true);
+        Place(clueText.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f),
+              new Vector2(16f, -38f), new Vector2(528f, 56f));
+        clueText.color = ClueTint;
         clueText.text = "";
-        clueText.color = new Color(0.93f, 0.78f, 0.48f);
 
         cluePanel.SetActive(false);
     }
 
     /// <summary>
-    /// A small "cassette player" card: amber top edge, a power dot + ON/OFF,
-    /// the current track name and position, and a key-hint row at the bottom.
+    /// A small cassette-player card: power dot + ON/OFF, current track name and position, and a
+    /// key-hint row at the bottom.
     /// </summary>
     private void BuildRadio()
     {
-        Image panel = NewImage("RadioPanel", transform, new Color(0.07f, 0.07f, 0.08f, 0.74f));
-        Place(panel.rectTransform, new Vector2(1f, 0f), new Vector2(1f, 0f),
-              new Vector2(-28f, 28f), new Vector2(360f, 132f));
-        panel.raycastTarget = false;
-        radioPanel = panel.gameObject;
+        RectTransform card = NewCard("RadioCard", new Vector2(1f, 0f), new Vector2(1f, 0f),
+                                     new Vector2(-28f, 28f), new Vector2(CardWidth, 132f), "R A D I O", CardScale);
+        radioPanel = card.gameObject;
 
-        // Amber top edge - gives the card a bit of "hardware" identity.
-        Image edge = NewImage("TopEdge", panel.transform, Accent);
-        Place(edge.rectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
-              Vector2.zero, new Vector2(360f, 3f));
-
-        // Header row: RADIO  ................  [dot] ON/OFF
-        radioTitleText = NewText("Title", panel.transform, 17, TextAnchor.UpperLeft);
-        Place(radioTitleText.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f),
-              new Vector2(16f, -12f), new Vector2(140f, 22f));
-        radioTitleText.text = "R A D I O";
-        radioTitleText.color = Dim;
-
-        radioPowerDot = NewImage("PowerDot", panel.transform, PowerOff);
+        radioPowerDot = NewImage("PowerDot", card, PowerOff);
         Place(radioPowerDot.rectTransform, new Vector2(1f, 1f), new Vector2(1f, 0.5f),
               new Vector2(-84f, -22f), new Vector2(10f, 10f));
 
-        radioPowerText = NewText("PowerLabel", panel.transform, 17, TextAnchor.UpperRight);
+        radioPowerText = NewText("PowerLabel", card, 17, TextAlignmentOptions.TopRight, false);
         Place(radioPowerText.rectTransform, new Vector2(1f, 1f), new Vector2(1f, 1f),
               new Vector2(-16f, -12f), new Vector2(60f, 22f));
         radioPowerText.text = "OFF";
 
-        // Track name, big and warm.
-        radioTrackText = NewText("Track", panel.transform, 25, TextAnchor.MiddleLeft);
+        // Track names can be Arabic and long, so this label shrinks to fit.
+        radioTrackText = NewText("Track", card, 25, TextAlignmentOptions.Left, true);
         Place(radioTrackText.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f),
-              new Vector2(16f, -42f), new Vector2(260f, 32f));
+              new Vector2(16f, -42f), new Vector2(262f, 32f));
+        radioTrackText.enableAutoSizing = true;
+        radioTrackText.fontSizeMin = 14f;
+        radioTrackText.fontSizeMax = 25f;
         radioTrackText.text = "";
 
-        radioPositionText = NewText("TrackPosition", panel.transform, 15, TextAnchor.MiddleRight);
+        radioPositionText = NewText("TrackPosition", card, 15, TextAlignmentOptions.Right, false);
         Place(radioPositionText.rectTransform, new Vector2(1f, 1f), new Vector2(1f, 1f),
               new Vector2(-16f, -46f), new Vector2(60f, 24f));
         radioPositionText.color = Dim;
         radioPositionText.text = "";
 
-        // Thin divider.
-        Image divider = NewImage("Divider", panel.transform, new Color(1f, 1f, 1f, 0.08f));
+        Image divider = NewImage("Divider", card, new Color(1f, 1f, 1f, 0.08f));
         Place(divider.rectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
               new Vector2(0f, -80f), new Vector2(328f, 1f));
 
-        // Key hints.
-        radioHintText = NewText("Hints", panel.transform, 16, TextAnchor.LowerLeft);
-        Place(radioHintText.rectTransform, new Vector2(0f, 0f), new Vector2(0f, 0f),
+        TMP_Text hints = NewText("Hints", card, 16, TextAlignmentOptions.BottomLeft, false);
+        Place(hints.rectTransform, new Vector2(0f, 0f), new Vector2(0f, 0f),
               new Vector2(16f, 10f), new Vector2(328f, 26f));
-        radioHintText.color = Dim;
-        radioHintText.text = "[Y] prev      [R] on/off      [T] next";
+        hints.color = Dim;
+        hints.text = "[Y] prev      [R] on/off      [T] next";
 
         radioPanel.SetActive(false);
     }
 
     // ------------------------------------------------------------- public --
 
-    /// <summary>Called by PlayerInteraction when the crosshair target changes.</summary>
+    /// <summary>Called by PlayerInteraction. Pass null to hide the prompt.</summary>
     public void SetPrompt(string prompt)
     {
         bool has = !string.IsNullOrEmpty(prompt);
@@ -179,7 +275,7 @@ public class HUDController : MonoBehaviour
             promptPanel.SetActive(has);
 
         if (has && promptText != null)
-            promptText.text = $"{prompt}   <color=#B9AE95>[E]</color>";
+            promptText.text = $"{prompt}   <color=#EDB34D>[E]</color>";
 
         crosshairTarget = has ? 1.7f : 1f;
     }
@@ -187,39 +283,91 @@ public class HUDController : MonoBehaviour
     /// <summary>Redraws every state-driven element. Safe to call any time.</summary>
     public void Refresh()
     {
-        RefreshInventory();
-        RefreshClue();
+        RefreshTasks();
         RefreshRadio();
     }
 
     // ------------------------------------------------------------ refresh --
 
-    private void RefreshInventory()
+    private void RefreshTasks()
     {
-        if (inventoryText == null) return;
+        if (taskRows == null) return;
 
-        inventoryText.text =
-            Line(GameState.HasCleaningKit, "Cleaning supplies") + "\n" +
-            Line(GameState.HasRadio, "Radio") + "\n" +
-            Line(GameState.UniformWorn, "Uniform (worn)");
+        bool animate = tasksInitialized;
+        bool anyCompleted = false;
+
+        for (int i = 0; i < taskRows.Length; i++)
+        {
+            TaskRow row = taskRows[i];
+            bool done = row.Def.IsDone();
+
+            if (done && !row.Done)
+            {
+                anyCompleted = true;
+                if (animate) row.Pop = 1f;
+            }
+
+            row.Done = done;
+            row.Outer.color = done ? Accent : Dim;
+            row.Inner.color = done ? Accent : BoxFill;
+            row.Tick.SetActive(done);
+            row.Label.color = done ? Dim : Warm;
+        }
+
+        // Every finished task stays; only the first unfinished one is shown.
+        bool pendingSeen = false;
+        for (int i = 0; i < taskRows.Length; i++)
+        {
+            TaskRow row = taskRows[i];
+            bool visible = row.Done || !pendingSeen;
+            if (!row.Done) pendingSeen = true;
+
+            if (visible && !row.Visible)
+            {
+                // A new task shows up a moment after the previous one is ticked off.
+                bool delayed = animate && !row.Done && anyCompleted;
+                row.RevealAt = delayed ? Time.unscaledTime + 0.9f : Time.unscaledTime - 1f;
+            }
+
+            row.Visible = visible;
+        }
+
+        UpdateTasks(0f, !tasksInitialized);
+        tasksInitialized = true;
     }
 
-    private static string Line(bool owned, string label)
+    private void UpdateTasks(float dt, bool snap)
     {
-        return owned
-            ? $"<color=#F2E9D8>[x] {label}</color>"
-            : $"<color=#857F70>[ ] {label}</color>";
-    }
+        if (taskRows == null || tasksCard == null) return;
 
-    private void RefreshClue()
-    {
-        if (cluePanel == null) return;
+        int slot = 0;
+        for (int i = 0; i < taskRows.Length; i++)
+        {
+            TaskRow row = taskRows[i];
+            bool revealed = row.Visible && Time.unscaledTime >= row.RevealAt;
+            float targetY = TaskFirstY - slot * TaskStep;
 
-        bool show = GameState.MalakUniformInspected;
-        if (cluePanel.activeSelf != show) cluePanel.SetActive(show);
+            if (!row.Placed || snap) { row.Y = targetY; row.Placed = true; }
+            else row.Y = Mathf.Lerp(row.Y, targetY, dt * 10f);
 
-        if (show && clueText != null)
-            clueText.text = "Clue: Malak's uniform is still folded in her locker.";
+            float targetAlpha = revealed ? 1f : 0f;
+            row.Alpha = snap ? targetAlpha : Mathf.MoveTowards(row.Alpha, targetAlpha, dt * 3f);
+
+            row.Pop = Mathf.MoveTowards(row.Pop, 0f, dt * 3.5f);
+            row.Outer.rectTransform.localScale = Vector3.one * (1f + 0.35f * row.Pop);
+
+            row.Root.anchoredPosition = new Vector2(0f, row.Y);
+            row.Group.alpha = row.Alpha;
+
+            bool show = revealed || row.Alpha > 0.001f;
+            if (row.Root.gameObject.activeSelf != show) row.Root.gameObject.SetActive(show);
+
+            if (revealed) slot++;
+        }
+
+        float targetHeight = 34f + Mathf.Max(slot, 1) * TaskStep + 14f;
+        tasksCardHeight = snap ? targetHeight : Mathf.Lerp(tasksCardHeight, targetHeight, dt * 10f);
+        tasksCard.sizeDelta = new Vector2(CardWidth, tasksCardHeight);
     }
 
     private void RefreshRadio()
@@ -250,41 +398,99 @@ public class HUDController : MonoBehaviour
         radioTrackText.color = playing ? Warm : Dim;
     }
 
+    // --------------------------------------------------------------- clue --
+
+    /// <summary>Shows a clue: fade in, stay a few seconds, fade out. A newer clue replaces an older one.</summary>
+    private void ShowClue(string text)
+    {
+        if (cluePanel == null) return;
+
+        clueText.text = text;
+        clueTime = 0f;
+        clueGroup.alpha = 0f;
+        cluePanel.SetActive(true);
+    }
+
+    private void UpdateClue(float dt)
+    {
+        if (clueTime < 0f || cluePanel == null) return;
+
+        clueTime += dt;
+
+        float alpha;
+        if (clueTime < ClueFadeIn) alpha = clueTime / ClueFadeIn;
+        else if (clueTime < ClueFadeIn + ClueHold) alpha = 1f;
+        else alpha = 1f - (clueTime - ClueFadeIn - ClueHold) / ClueFadeOut;
+
+        if (alpha <= 0f)
+        {
+            clueTime = -1f;
+            clueGroup.alpha = 0f;
+            cluePanel.SetActive(false);
+            return;
+        }
+
+        clueGroup.alpha = alpha;
+    }
+
+    // -------------------------------------------------------------- update --
+
     private void Update()
     {
-        if (crosshair == null) return;
+        float dt = Time.unscaledDeltaTime;
 
-        Vector3 target = Vector3.one * crosshairTarget;
-        crosshair.rectTransform.localScale =
-            Vector3.Lerp(crosshair.rectTransform.localScale, target, Time.deltaTime * 14f);
+        if (crosshair != null)
+        {
+            Vector3 target = Vector3.one * crosshairTarget;
+            crosshair.rectTransform.localScale = Vector3.Lerp(crosshair.rectTransform.localScale, target, dt * 14f);
 
-        Color c = crosshair.color;
-        c.a = Mathf.Lerp(c.a, crosshairTarget > 1f ? 0.95f : 0.45f, Time.deltaTime * 14f);
-        crosshair.color = c;
+            Color c = crosshair.color;
+            c.a = Mathf.Lerp(c.a, crosshairTarget > 1f ? 0.95f : 0.45f, dt * 14f);
+            crosshair.color = c;
+        }
+
+        UpdateTasks(dt, false);
+        UpdateClue(dt);
     }
 
     // ------------------------------------------------------------- utils ---
 
-    private static Font DefaultFont
+    /// <summary>
+    /// The shared card: translucent dark plate, amber top edge and (optionally) a small spaced-out
+    /// title. Scaling happens around the pivot, so a card pinned to a screen edge grows inward.
+    /// </summary>
+    private RectTransform NewCard(string name, Vector2 anchor, Vector2 pivot,
+                                  Vector2 position, Vector2 size, string title, float scale)
     {
-        get
+        Image bg = NewImage(name, transform, CardBg);
+        Place(bg.rectTransform, anchor, pivot, position, size);
+        bg.rectTransform.localScale = Vector3.one * scale;
+
+        Image edge = NewImage("TopEdge", bg.transform, Accent);
+        RectTransform er = edge.rectTransform;
+        er.anchorMin = new Vector2(0f, 1f);
+        er.anchorMax = new Vector2(1f, 1f);
+        er.pivot = new Vector2(0.5f, 1f);
+        er.anchoredPosition = Vector2.zero;
+        er.sizeDelta = new Vector2(0f, 3f);
+
+        if (!string.IsNullOrEmpty(title))
         {
-            if (cachedFont != null) return cachedFont;
-
-            try
-            {
-                cachedFont = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            }
-            catch
-            {
-                cachedFont = null;
-            }
-
-            if (cachedFont == null)
-                cachedFont = Font.CreateDynamicFontFromOSFont("Arial", 24);
-
-            return cachedFont;
+            TMP_Text t = NewText("Title", bg.transform, 17, TextAlignmentOptions.TopLeft, false);
+            Place(t.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f),
+                  new Vector2(16f, -12f), new Vector2(180f, 22f));
+            t.text = title;
+            t.color = Dim;
         }
+
+        return bg.rectTransform;
+    }
+
+    private static void Stroke(Transform parent, Vector2 position, Vector2 size, float degrees)
+    {
+        Image bar = NewImage("Stroke", parent, BoxFill);
+        Place(bar.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), position, size);
+        bar.rectTransform.localRotation = Quaternion.Euler(0f, 0f, degrees);
     }
 
     private static Image NewImage(string name, Transform parent, Color color)
@@ -298,21 +504,37 @@ public class HUDController : MonoBehaviour
         return image;
     }
 
-    private static Text NewText(string name, Transform parent, int size, TextAnchor anchor)
+    /// <summary>
+    /// 'rtl' = use RTL Text Mesh Pro, which joins and reverses Arabic correctly. English text that
+    /// starts with a letter is left alone by it, so it is safe for any label that starts with a letter.
+    /// Labels that start with a symbol (like "[Y] prev") use plain TMP.
+    /// </summary>
+    private TMP_Text NewText(string name, Transform parent, float size, TextAlignmentOptions align, bool rtl)
     {
         GameObject go = new GameObject(name, typeof(RectTransform));
         go.transform.SetParent(parent, false);
 
-        Text text = go.AddComponent<Text>();
-        text.font = DefaultFont;
-        text.fontSize = size;
-        text.alignment = anchor;
-        text.color = Warm;
-        text.supportRichText = true;
-        text.horizontalOverflow = HorizontalWrapMode.Wrap;
-        text.verticalOverflow = VerticalWrapMode.Overflow;
-        text.raycastTarget = false;
-        return text;
+        TMP_Text t;
+        if (rtl)
+        {
+            RTLTextMeshPro r = go.AddComponent<RTLTextMeshPro>();
+            r.Farsi = false;
+            t = r;
+        }
+        else
+        {
+            t = go.AddComponent<TextMeshProUGUI>();
+        }
+
+        if (font != null) t.font = font;
+        t.fontSize = size;
+        t.alignment = align;
+        t.color = Warm;
+        t.richText = true;
+        t.textWrappingMode = TextWrappingModes.Normal;
+        t.overflowMode = TextOverflowModes.Overflow;
+        t.raycastTarget = false;
+        return t;
     }
 
     private static void Place(RectTransform rt, Vector2 anchor, Vector2 pivot,

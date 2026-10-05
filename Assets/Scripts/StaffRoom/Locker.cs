@@ -85,7 +85,7 @@ public class Locker : Interactable
         if (audio != null)
         {
             AudioClip clip = isOpen ? openClip : closeClip;
-            if (clip != null) audio.PlayOneShot(clip);
+            if (clip != null) audio.PlayOneShot(clip, AudioLevels.SfxVolume);
         }
 
         GameState.RaiseChanged();

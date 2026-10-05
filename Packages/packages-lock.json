@@ -17,6 +17,13 @@
       },
       "hash": "30d22075093d1d35dfb0091c1c7550e9ad948577"
     },
+    "com.nosuchstudio.rtltmpro": {
+      "version": "https://github.com/hk1ll3r/RTLTMPro.git?path=/UPMPackage",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "375f55b139132d7099c0dd27a06112f3b24e4a4e"
+    },
     "com.unity.ai.navigation": {
       "version": "2.0.14",
       "depth": 0,

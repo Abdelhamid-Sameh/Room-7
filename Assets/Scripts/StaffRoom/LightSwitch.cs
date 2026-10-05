@@ -34,7 +34,7 @@ public class LightSwitch : Interactable
         Apply();
 
         if (clickClip != null)
-            AudioSource.PlayClipAtPoint(clickClip, transform.position);
+            AudioLevels.PlaySfx(clickClip, transform.position);
     }
 
     private void Apply()
