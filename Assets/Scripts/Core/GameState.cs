@@ -35,7 +35,7 @@ public static class GameState
     public static bool MalakUniformInspected;
 
     // --- clues -------------------------------------------------------------
-    public const string ClueMalakUniform = "Malak's uniform is still folded in her locker.";
+    public const string ClueMalakUniform = "Malak's uniform is folded in her locker.";
 
     /// <summary>
     /// Every clue the player has found, in the order found. The HUD flashes each one once when it
