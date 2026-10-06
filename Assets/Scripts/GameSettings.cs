@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 public class GameSettings : MonoBehaviour
 {
@@ -10,11 +9,6 @@ public class GameSettings : MonoBehaviour
         Application.targetFrameRate = 60;
     }
 
-    void Update()
-    {
-        if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
-        {
-            Application.Quit();
-        }
-    }
+    // Esc used to quit the game here. It now opens the pause menu instead (see PauseMenu),
+    // which has the Quit button.
 }

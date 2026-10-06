@@ -63,7 +63,7 @@ public class PlayerInteraction : MonoBehaviour
 
     private void Update()
     {
-        if (IsTransitioning)
+        if (PauseMenu.IsPaused || IsTransitioning)
         {
             current = null;
             ShowPrompt(null);

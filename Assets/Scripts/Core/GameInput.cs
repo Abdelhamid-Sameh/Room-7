@@ -31,6 +31,19 @@ public static class GameInput
         }
     }
 
+    /// <summary>Esc, or Start on a gamepad - pause / resume.</summary>
+    public static bool PausePressed
+    {
+        get
+        {
+            Keyboard kb = Keyboard.current;
+            if (kb != null && kb.escapeKey.wasPressedThisFrame) return true;
+
+            Gamepad pad = Gamepad.current;
+            return pad != null && pad.startButton.wasPressedThisFrame;
+        }
+    }
+
     /// <summary>R - turn the carried radio on / off.</summary>
     public static bool RadioPlayPressed
     {

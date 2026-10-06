@@ -78,6 +78,12 @@ public class HUDController : MonoBehaviour
     private TMP_Text radioPowerText;
     private TMP_Text radioTrackText;
     private TMP_Text radioPositionText;
+    private TMP_Text radioElapsedText;
+    private TMP_Text radioTotalText;
+    private TMP_Text radioPlayLabel;
+    private RectTransform radioProgress;
+    private Image[] radioBars;
+    private int radioLastSecond = -1;
 
     private static readonly Color Warm = new Color(0.95f, 0.91f, 0.82f);
     private static readonly Color Dim = new Color(0.55f, 0.53f, 0.47f);
@@ -218,14 +224,25 @@ public class HUDController : MonoBehaviour
     }
 
     /// <summary>
-    /// A small cassette-player card: power dot + ON/OFF, current track name and position, and a
-    /// key-hint row at the bottom.
+    /// The radio card: a little equalizer that dances while it plays, ON/OFF pill, the track name
+    /// (shrinks to fit long Arabic names), a progress bar with elapsed / total time, and key caps
+    /// showing the controls.
     /// </summary>
     private void BuildRadio()
     {
         RectTransform card = NewCard("RadioCard", new Vector2(1f, 0f), new Vector2(1f, 0f),
-                                     new Vector2(-28f, 28f), new Vector2(CardWidth, 132f), "R A D I O", CardScale);
+                                     new Vector2(-28f, 28f), new Vector2(CardWidth, 158f), "R A D I O", CardScale);
         radioPanel = card.gameObject;
+
+        // Equalizer next to the title.
+        radioBars = new Image[4];
+        for (int i = 0; i < radioBars.Length; i++)
+        {
+            Image bar = NewImage("Bar", card, Dim);
+            Place(bar.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 0f),
+                  new Vector2(112f + i * 7f, -30f), new Vector2(4f, 3f));
+            radioBars[i] = bar;
+        }
 
         radioPowerDot = NewImage("PowerDot", card, PowerOff);
         Place(radioPowerDot.rectTransform, new Vector2(1f, 1f), new Vector2(1f, 0.5f),
@@ -236,7 +253,7 @@ public class HUDController : MonoBehaviour
               new Vector2(-16f, -12f), new Vector2(60f, 22f));
         radioPowerText.text = "OFF";
 
-        // Track names can be Arabic and long, so this label shrinks to fit.
+        // Track name - can be Arabic and long, so it shrinks to fit.
         radioTrackText = NewText("Track", card, 25, TextAlignmentOptions.Left, true);
         Place(radioTrackText.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f),
               new Vector2(16f, -42f), new Vector2(262f, 32f));
@@ -251,17 +268,61 @@ public class HUDController : MonoBehaviour
         radioPositionText.color = Dim;
         radioPositionText.text = "";
 
+        // Progress: elapsed - bar - total
+        radioElapsedText = NewText("Elapsed", card, 14, TextAlignmentOptions.Left, false);
+        Place(radioElapsedText.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 0.5f),
+              new Vector2(16f, -90f), new Vector2(46f, 18f));
+        radioElapsedText.color = Dim;
+        radioElapsedText.text = "0:00";
+
+        Image barBg = NewImage("ProgressBg", card, new Color(1f, 1f, 1f, 0.12f));
+        Place(barBg.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 0.5f),
+              new Vector2(66f, -90f), new Vector2(228f, 4f));
+
+        Image fill = NewImage("ProgressFill", barBg.transform, Accent);
+        radioProgress = fill.rectTransform;
+        radioProgress.anchorMin = new Vector2(0f, 0f);
+        radioProgress.anchorMax = new Vector2(0f, 1f);
+        radioProgress.offsetMin = Vector2.zero;
+        radioProgress.offsetMax = Vector2.zero;
+
+        radioTotalText = NewText("Total", card, 14, TextAlignmentOptions.Right, false);
+        Place(radioTotalText.rectTransform, new Vector2(1f, 1f), new Vector2(1f, 0.5f),
+              new Vector2(-16f, -90f), new Vector2(46f, 18f));
+        radioTotalText.color = Dim;
+        radioTotalText.text = "0:00";
+
         Image divider = NewImage("Divider", card, new Color(1f, 1f, 1f, 0.08f));
         Place(divider.rectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
-              new Vector2(0f, -80f), new Vector2(328f, 1f));
+              new Vector2(0f, -112f), new Vector2(328f, 1f));
 
-        TMP_Text hints = NewText("Hints", card, 16, TextAlignmentOptions.BottomLeft, false);
-        Place(hints.rectTransform, new Vector2(0f, 0f), new Vector2(0f, 0f),
-              new Vector2(16f, 10f), new Vector2(328f, 26f));
-        hints.color = Dim;
-        hints.text = "[Y] prev      [R] on/off      [T] next";
+        // Controls as little key caps.
+        BuildKey(card, "Y", "Prev", 16f);
+        radioPlayLabel = BuildKey(card, "R", "Turn on", 128f);
+        BuildKey(card, "T", "Next", 240f);
 
         radioPanel.SetActive(false);
+    }
+
+    private TMP_Text BuildKey(RectTransform parent, string key, string label, float x)
+    {
+        Image cap = NewImage("KeyCap_" + key, parent, Dim);
+        Place(cap.rectTransform, new Vector2(0f, 0f), new Vector2(0f, 0.5f),
+              new Vector2(x, 24f), new Vector2(22f, 22f));
+
+        Image face = NewImage("Face", cap.transform, BoxFill);
+        Fill(face.rectTransform, new Vector2(1.5f, 1.5f), new Vector2(-1.5f, -1.5f));
+
+        TMP_Text k = NewText("Key", cap.transform, 14, TextAlignmentOptions.Center, false);
+        Fill(k.rectTransform, Vector2.zero, Vector2.zero);
+        k.text = key;
+
+        TMP_Text l = NewText("Label", parent, 15, TextAlignmentOptions.Left, false);
+        Place(l.rectTransform, new Vector2(0f, 0f), new Vector2(0f, 0.5f),
+              new Vector2(x + 30f, 24f), new Vector2(78f, 22f));
+        l.color = Dim;
+        l.text = label;
+        return l;
     }
 
     // ------------------------------------------------------------- public --
@@ -384,6 +445,7 @@ public class HUDController : MonoBehaviour
         radioPowerDot.color = playing ? PowerOn : PowerOff;
         radioPowerText.text = playing ? "ON" : "OFF";
         radioPowerText.color = playing ? PowerOn : Dim;
+        radioPlayLabel.text = playing ? "Turn off" : "Turn on";
 
         if (radio != null && radio.HasAudio)
         {
@@ -396,6 +458,49 @@ public class HUDController : MonoBehaviour
             radioPositionText.text = "";
         }
         radioTrackText.color = playing ? Warm : Dim;
+
+        radioLastSecond = -1;   // make the time labels redraw
+        UpdateRadio(0f);
+    }
+
+    /// <summary>Every frame: equalizer bars, progress bar and the time labels.</summary>
+    private void UpdateRadio(float dt)
+    {
+        if (radioPanel == null || !radioPanel.activeSelf) return;
+
+        RadioController radio = GameSystems.HasInstance ? GameSystems.Instance.Radio : null;
+        bool playing = GameState.RadioPlaying && radio != null && radio.HasAudio;
+
+        for (int i = 0; i < radioBars.Length; i++)
+        {
+            float target = playing
+                ? 4f + 12f * Mathf.Abs(Mathf.Sin(Time.unscaledTime * (3.1f + i * 1.3f) + i * 1.7f))
+                : 3f;
+
+            Vector2 size = radioBars[i].rectTransform.sizeDelta;
+            size.y = dt <= 0f ? target : Mathf.Lerp(size.y, target, dt * 14f);
+            radioBars[i].rectTransform.sizeDelta = size;
+            radioBars[i].color = playing ? Accent : Dim;
+        }
+
+        float elapsed = radio != null ? radio.Elapsed : 0f;
+        float duration = radio != null ? radio.Duration : 0f;
+        float fraction = duration > 0.01f ? Mathf.Clamp01(elapsed / duration) : 0f;
+        radioProgress.anchorMax = new Vector2(fraction, 1f);
+
+        int second = Mathf.FloorToInt(elapsed);
+        if (second != radioLastSecond)
+        {
+            radioLastSecond = second;
+            radioElapsedText.text = FormatTime(elapsed);
+            radioTotalText.text = FormatTime(duration);
+        }
+    }
+
+    private static string FormatTime(float seconds)
+    {
+        int total = Mathf.Max(0, Mathf.FloorToInt(seconds));
+        return (total / 60) + ":" + (total % 60).ToString("00");
     }
 
     // --------------------------------------------------------------- clue --
@@ -451,6 +556,7 @@ public class HUDController : MonoBehaviour
 
         UpdateTasks(dt, false);
         UpdateClue(dt);
+        UpdateRadio(dt);
     }
 
     // ------------------------------------------------------------- utils ---

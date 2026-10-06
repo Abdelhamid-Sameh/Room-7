@@ -9,17 +9,13 @@ using UnityEngine;
 /// track ends; with a single track it loops.
 ///
 /// Mix: the radio's own level (Volume) x the player's Master and Music levels (AudioLevels).
-/// Playlist: assign clips to "Tracks" on the GameSystems object (and optional display names to
-/// "Track Names", same order). With an empty list the HUD just shows "No tape loaded".
+/// Playlist: the "Playlist" asset (tracks + the names shown) - edit it in one place for both scenes.
 /// </summary>
 public class RadioController : MonoBehaviour
 {
     [Header("Audio")]
-    [Tooltip("The playlist.")]
-    [SerializeField] private AudioClip[] tracks;
-
-    [Tooltip("Optional display names, same order as Tracks. Leave empty to show 'Track N'.")]
-    [SerializeField] private string[] trackNames;
+    [Tooltip("The tracks and the names shown for them (Assets/Audio/Music/RadioPlaylist.asset).")]
+    [SerializeField] private RadioPlaylist playlist;
 
     [Tooltip("The radio's own level. The player's Master and Music sliders multiply it.")]
     [SerializeField, Range(0f, 1f)] private float volume = 0.2f;
@@ -27,22 +23,33 @@ public class RadioController : MonoBehaviour
     private static RadioController instance;
     private AudioSource source;
 
-    public int TrackCount => tracks != null ? tracks.Length : 0;
+    // Used to tell a track that really ended from a stream that has not started yet (big streamed
+    // files take a moment) or a one-off audio hiccup.
+    private bool wasPlaying;
+    private float lastTime;
+
+    public int TrackCount => playlist != null ? playlist.Count : 0;
     public bool HasAudio => TrackCount > 0;
 
-    public string TrackName
+    private int CurrentIndex => Mathf.Clamp(GameState.RadioTrackIndex, 0, Mathf.Max(0, TrackCount - 1));
+
+    public string TrackName => HasAudio ? playlist.NameAt(CurrentIndex) : "No tape loaded";
+
+    public string TrackPosition => HasAudio ? $"{CurrentIndex + 1} / {TrackCount}" : "";
+
+    /// <summary>Seconds played of the current track (0 while the radio is off).</summary>
+    public float Elapsed => source != null && source.clip != null && source.isPlaying ? source.time : 0f;
+
+    /// <summary>Length in seconds of the current track.</summary>
+    public float Duration
     {
         get
         {
-            if (TrackCount == 0) return "No tape loaded";
-            int index = Mathf.Clamp(GameState.RadioTrackIndex, 0, TrackCount - 1);
-            if (trackNames != null && index < trackNames.Length && !string.IsNullOrWhiteSpace(trackNames[index]))
-                return trackNames[index];
-            return $"Track {index + 1}";
+            if (!HasAudio) return 0f;
+            AudioClip clip = playlist.ClipAt(CurrentIndex);
+            return clip != null ? clip.length : 0f;
         }
     }
-
-    public string TrackPosition => HasAudio ? $"{GameState.RadioTrackIndex + 1} / {TrackCount}" : "";
 
     private void Awake()
     {
@@ -87,15 +94,37 @@ public class RadioController : MonoBehaviour
 
     private void Update()
     {
-        if (!GameState.HasRadio) return;
+        if (!GameState.HasRadio || PauseMenu.IsPaused) return;
 
         if (GameInput.RadioPlayPressed) TogglePower();
         else if (GameInput.RadioNextPressed) NextTrack();
         else if (GameInput.RadioPrevPressed) PreviousTrack();
 
-        // A track just ran out: move on to the next one.
-        if (GameState.RadioPlaying && TrackCount > 1 && source != null && source.clip != null && !source.isPlaying)
-            NextTrack();
+        WatchPlayback();
+    }
+
+    /// <summary>
+    /// Moves on to the next track when one really finishes. A track only counts as finished if it was
+    /// seen playing and stopped near its end; if it stopped any other way (an audio hiccup) it is simply
+    /// started again, and a stream that has not begun playing yet is left alone.
+    /// </summary>
+    private void WatchPlayback()
+    {
+        if (!GameState.RadioPlaying || source == null || source.clip == null || AudioListener.pause) return;
+
+        if (source.isPlaying)
+        {
+            wasPlaying = true;
+            lastTime = source.time;
+            return;
+        }
+
+        if (!wasPlaying) return;   // not started yet
+        wasPlaying = false;
+
+        bool endedNaturally = lastTime >= source.clip.length - 1.5f;
+        if (endedNaturally && TrackCount > 1) NextTrack();
+        else Apply();
     }
 
     /// <summary>R - on / off.</summary>
@@ -110,7 +139,7 @@ public class RadioController : MonoBehaviour
     public void NextTrack()
     {
         int count = Mathf.Max(1, TrackCount);
-        GameState.RadioTrackIndex = (GameState.RadioTrackIndex + 1) % count;
+        GameState.RadioTrackIndex = (CurrentIndex + 1) % count;
         Apply();
         GameState.RaiseChanged();
     }
@@ -119,7 +148,7 @@ public class RadioController : MonoBehaviour
     public void PreviousTrack()
     {
         int count = Mathf.Max(1, TrackCount);
-        GameState.RadioTrackIndex = (GameState.RadioTrackIndex - 1 + count) % count;
+        GameState.RadioTrackIndex = (CurrentIndex - 1 + count) % count;
         Apply();
         GameState.RaiseChanged();
     }
@@ -137,11 +166,19 @@ public class RadioController : MonoBehaviour
             return;
         }
 
-        int index = Mathf.Clamp(GameState.RadioTrackIndex, 0, TrackCount - 1);
-        if (source.clip != tracks[index] || !source.isPlaying)
+        AudioClip wanted = playlist.ClipAt(CurrentIndex);
+        if (wanted == null)
         {
-            source.clip = tracks[index];
+            source.Stop();
+            return;
+        }
+
+        if (source.clip != wanted || !source.isPlaying)
+        {
+            source.clip = wanted;
             ApplyVolume();
+            wasPlaying = false;
+            lastTime = 0f;
             source.Play();
         }
     }

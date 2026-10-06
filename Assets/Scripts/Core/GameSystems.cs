@@ -53,6 +53,7 @@ public class GameSystems : MonoBehaviour
 
         BuildFade();
         BuildHud();
+        BuildPause();
 
         GameState.Changed += OnStateChanged;
     }
@@ -101,6 +102,12 @@ public class GameSystems : MonoBehaviour
         GameObject canvasGO = NewCanvas("HUD", 800);
         HUD = canvasGO.AddComponent<HUDController>();
         HUD.Build(hudFont);
+    }
+
+    private void BuildPause()
+    {
+        PauseMenu pause = gameObject.AddComponent<PauseMenu>();
+        pause.Build(hudFont);
     }
 
     private GameObject NewCanvas(string name, int sortingOrder)

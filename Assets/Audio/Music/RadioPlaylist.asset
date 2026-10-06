@@ -1,0 +1,42 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28eed1960c02aa84ba3ee57f93084ce7, type: 3}
+  m_Name: RadioPlaylist
+  m_EditorClassIdentifier: Assembly-CSharp::RadioPlaylist
+  tracks:
+  - clip: {fileID: 8300000, guid: 5310c9e38bbcb594488c643428db3f8e, type: 3}
+    displayName: "\u0623\u0646\u0627 \u0647\u0648\u064A\u062A \u0648\u0627\u0646\u062A\u0647\u064A\u062A
+      \u0633\u064A\u062F \u062F\u0631\u0648\u064A\u0634"
+  - clip: {fileID: 8300000, guid: 1b584321e3f84fc45b475fec84b2c461, type: 3}
+    displayName: "\u0627\u0644\u0634\u064A\u062E \u0627\u0645\u0627\u0645 \u0627\u0644\u0628\u062D\u0631
+      \u0628\u064A\u0636\u062D\u0643 \u0644\u064A\u0647"
+  - clip: {fileID: 8300000, guid: 8a7c71cff760ad44b8bfac5785add800, type: 3}
+    displayName: "\u0627\u0644\u0641 \u0644\u064A\u0644\u0629 \u0648\u0644\u064A\u0644\u0647
+      \u0627\u0645 \u0643\u0644\u062B\u0648\u0645"
+  - clip: {fileID: 8300000, guid: 4f5106c9511e4304c96ed809e0d601a1, type: 3}
+    displayName: "\u0632\u0648\u0631\u0648\u0646\u0649 \u0643\u0644 \u0633\u0646\u0629
+      \u0645\u0631\u0629"
+  - clip: {fileID: 8300000, guid: d1429db565aac4b48b337abc78ddec70, type: 3}
+    displayName: "\u0633\u0627\u0644\u0645\u0629 \u064A\u0627 \u0633\u0644\u0627\u0645\u0629"
+  - clip: {fileID: 8300000, guid: 2413c86998e9e8f469660cae8efdb33a, type: 3}
+    displayName: "\u0639\u0645\u062F\u0627\u0646 \u0627\u0644\u0646\u0648\u0631 \u0633\u064A\u0631\u0629
+      \u0627\u0644\u0627\u0631\u0627\u062C\u0648\u0632"
+  - clip: {fileID: 8300000, guid: c44d45fd001bd5645986109d41916322, type: 3}
+    displayName: "\u0639\u0646 \u0645\u0648\u0636\u0648\u0639 \u0627\u0644\u0641\u0648\u0644
+      \u0648 \u0627\u0644\u0644\u062D\u0645\u0629 \u0627\u0644\u0634\u064A\u062E
+      \u0627\u0645\u0627\u0645"
+  - clip: {fileID: 8300000, guid: 4a68e652e4da5af43b5676ca8105422c, type: 3}
+    displayName: "\u0642\u0627\u0631\u0626\u0629 \u0627\u0644\u0641\u0646\u062C\u0627\u0646
+      \u0639\u0628\u062F \u0627\u0644\u062D\u0644\u064A\u0645"
+  - clip: {fileID: 8300000, guid: da86869c985c568499151c5bbba00c5b, type: 3}
+    displayName: "\u0645\u0633\u0627\u0631 \u0627\u062C\u0628\u0627\u0631\u064A \u0643\u0627\u0646\u062A
+      \u0647\u062A\u0641\u0631\u0642 \u0641\u064A \u0627\u0644\u0648\u062F\u0627\u0639"
