@@ -85,6 +85,22 @@ public class HUDController : MonoBehaviour
     private Image[] radioBars;
     private int radioLastSecond = -1;
 
+    // tidy progress card (bottom-left) and the hold-to-wipe bar under the crosshair
+    private RectTransform tidyCard;
+    private CanvasGroup tidyGroup;
+    private TMP_Text tidyTitle;
+    private TMP_Text tidyCount;
+    private TMP_Text tidyNote;
+    private RectTransform tidyFill;
+    private Image tidyFillImage;
+    private float tidyShown;
+    private float tidyFillAmount;
+    private string tidyLabelShown = null;
+    private int tidyLastDone = -1;
+    private int tidyLastTotal = -1;
+    private GameObject holdBar;
+    private RectTransform holdFill;
+
     private static readonly Color Warm = new Color(0.95f, 0.91f, 0.82f);
     private static readonly Color Dim = new Color(0.55f, 0.53f, 0.47f);
     private static readonly Color CardBg = new Color(0.07f, 0.07f, 0.08f, 0.74f);
@@ -106,6 +122,8 @@ public class HUDController : MonoBehaviour
         BuildTasks();
         BuildClue();
         BuildRadio();
+        BuildTidy();
+        BuildHoldBar();
     }
 
     private void OnEnable()
@@ -160,9 +178,11 @@ public class HUDController : MonoBehaviour
         // Add or reorder tasks here. Order = the order they are revealed in.
         TaskDef[] defs =
         {
+            new TaskDef { Label = "Enter the staff room",         IsDone = () => GameState.HasVisited("StaffRoom") },
             new TaskDef { Label = "Put on your uniform",         IsDone = () => GameState.UniformWorn },
             new TaskDef { Label = "Take the cleaning supplies",  IsDone = () => GameState.HasCleaningKit },
             new TaskDef { Label = "Take the radio",              IsDone = () => GameState.HasRadio },
+            new TaskDef { Label = "Clean room 1",                IsDone = () => GameState.IsRoomCleaned("Room01") },
         };
 
         taskRows = new TaskRow[defs.Length];
@@ -246,12 +266,12 @@ public class HUDController : MonoBehaviour
 
         radioPowerDot = NewImage("PowerDot", card, PowerOff);
         Place(radioPowerDot.rectTransform, new Vector2(1f, 1f), new Vector2(1f, 0.5f),
-              new Vector2(-84f, -22f), new Vector2(10f, 10f));
+              new Vector2(-122f, -22f), new Vector2(10f, 10f));
 
         radioPowerText = NewText("PowerLabel", card, 17, TextAlignmentOptions.TopRight, false);
         Place(radioPowerText.rectTransform, new Vector2(1f, 1f), new Vector2(1f, 1f),
-              new Vector2(-16f, -12f), new Vector2(60f, 22f));
-        radioPowerText.text = "OFF";
+              new Vector2(-16f, -12f), new Vector2(100f, 22f));
+        radioPowerText.text = "READY";
 
         // Track name - can be Arabic and long, so it shrinks to fit.
         radioTrackText = NewText("Track", card, 25, TextAlignmentOptions.Left, true);
@@ -298,7 +318,7 @@ public class HUDController : MonoBehaviour
 
         // Controls as little key caps.
         BuildKey(card, "Y", "Prev", 16f);
-        radioPlayLabel = BuildKey(card, "R", "Turn on", 128f);
+        radioPlayLabel = BuildKey(card, "R", "Play", 128f);
         BuildKey(card, "T", "Next", 240f);
 
         radioPanel.SetActive(false);
@@ -325,10 +345,136 @@ public class HUDController : MonoBehaviour
         return l;
     }
 
+    // ---------------------------------------------------------- tidy + hold --
+
+    /// <summary>
+    /// Bottom-left card while the player is in a room with things to tidy: room name, 'done / total',
+    /// a progress bar, and a note. Turns green when the room is spotless. Hidden everywhere else.
+    /// </summary>
+    private void BuildTidy()
+    {
+        tidyCard = NewCard("TidyCard", new Vector2(0f, 0f), new Vector2(0f, 0f),
+                           new Vector2(28f, 28f), new Vector2(320f, 100f), "T I D Y", CardScale);
+        tidyGroup = tidyCard.gameObject.AddComponent<CanvasGroup>();
+        tidyGroup.alpha = 0f;
+        tidyTitle = tidyCard.Find("Title").GetComponent<TMP_Text>();
+
+        tidyCount = NewText("Count", tidyCard, 20, TextAlignmentOptions.TopRight, false);
+        Place(tidyCount.rectTransform, new Vector2(1f, 1f), new Vector2(1f, 1f),
+              new Vector2(-16f, -10f), new Vector2(120f, 26f));
+        tidyCount.color = Accent;
+        tidyCount.text = "0 / 0";
+
+        Image barBg = NewImage("BarBg", tidyCard, new Color(1f, 1f, 1f, 0.12f));
+        Place(barBg.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 0.5f),
+              new Vector2(16f, -50f), new Vector2(288f, 8f));
+
+        Image fill = NewImage("BarFill", barBg.transform, Accent);
+        tidyFill = fill.rectTransform;
+        tidyFill.anchorMin = new Vector2(0f, 0f);
+        tidyFill.anchorMax = new Vector2(0f, 1f);
+        tidyFill.offsetMin = Vector2.zero;
+        tidyFill.offsetMax = Vector2.zero;
+        tidyFillImage = fill;
+
+        tidyNote = NewText("Note", tidyCard, 16, TextAlignmentOptions.TopLeft, false);
+        Place(tidyNote.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f),
+              new Vector2(16f, -66f), new Vector2(288f, 24f));
+        tidyNote.color = Dim;
+        tidyNote.text = "";
+
+        tidyCard.gameObject.SetActive(false);
+    }
+
+    private void UpdateTidy(float dt)
+    {
+        if (tidyCard == null) return;
+
+        bool want = GameState.TidyTotal > 0;
+        tidyShown = dt <= 0f ? (want ? 1f : 0f) : Mathf.MoveTowards(tidyShown, want ? 1f : 0f, dt * 4f);
+
+        if (tidyShown <= 0.001f)
+        {
+            if (tidyCard.gameObject.activeSelf) tidyCard.gameObject.SetActive(false);
+            return;
+        }
+
+        if (!tidyCard.gameObject.activeSelf) tidyCard.gameObject.SetActive(true);
+        tidyGroup.alpha = tidyShown;
+
+        int done = GameState.TidyDone;
+        int total = Mathf.Max(1, GameState.TidyTotal);
+        bool complete = GameState.TidyTotal > 0 && done >= GameState.TidyTotal;
+
+        float target = (float)done / total;
+        tidyFillAmount = dt <= 0f ? target : Mathf.MoveTowards(tidyFillAmount, target, dt * 1.2f);
+        tidyFill.anchorMax = new Vector2(tidyFillAmount, 1f);
+        tidyFillImage.color = complete ? PowerOn : Accent;
+        tidyCount.color = complete ? PowerOn : Accent;
+
+        if (tidyLabelShown != GameState.TidyRoomLabel)
+        {
+            tidyLabelShown = GameState.TidyRoomLabel;
+            tidyTitle.text = SpaceOut(tidyLabelShown.ToUpperInvariant());
+        }
+
+        if (done != tidyLastDone || GameState.TidyTotal != tidyLastTotal)
+        {
+            tidyLastDone = done;
+            tidyLastTotal = GameState.TidyTotal;
+            tidyCount.text = done + " / " + GameState.TidyTotal;
+
+            int left = GameState.TidyTotal - done;
+            tidyNote.text = complete ? "Spotless" : left + (left == 1 ? " thing left to tidy" : " things left to tidy");
+            tidyNote.color = complete ? PowerOn : Dim;
+        }
+    }
+
+    /// <summary>'Room 1' becomes 'R O O M   1' - the spaced-out title style of the cards.</summary>
+    private static string SpaceOut(string text)
+    {
+        var sbd = new System.Text.StringBuilder();
+        for (int i = 0; i < text.Length; i++)
+        {
+            if (text[i] == ' ') { sbd.Append("   "); continue; }
+            sbd.Append(text[i]);
+            if (i < text.Length - 1 && text[i + 1] != ' ') sbd.Append(' ');
+        }
+        return sbd.ToString();
+    }
+
+    /// <summary>A thin bar just under the crosshair that fills while the player holds the button to wipe something.</summary>
+    private void BuildHoldBar()
+    {
+        Image bg = NewImage("HoldBar", transform, new Color(0f, 0f, 0f, 0.5f));
+        Place(bg.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
+              new Vector2(0f, -34f), new Vector2(130f, 6f));
+        holdBar = bg.gameObject;
+
+        Image fill = NewImage("Fill", bg.transform, Accent);
+        holdFill = fill.rectTransform;
+        holdFill.anchorMin = new Vector2(0f, 0f);
+        holdFill.anchorMax = new Vector2(0f, 1f);
+        holdFill.offsetMin = Vector2.zero;
+        holdFill.offsetMax = Vector2.zero;
+
+        holdBar.SetActive(false);
+    }
+
+    /// <summary>0 hides the bar; anything above fills it. Called by PlayerInteraction during a hold.</summary>
+    public void SetHoldProgress(float progress)
+    {
+        if (holdBar == null) return;
+
+        bool show = progress > 0.001f;
+        if (holdBar.activeSelf != show) holdBar.SetActive(show);
+        if (show) holdFill.anchorMax = new Vector2(Mathf.Clamp01(progress), 1f);
+    }
+
     // ------------------------------------------------------------- public --
 
-    /// <summary>Called by PlayerInteraction. Pass null to hide the prompt.</summary>
-    public void SetPrompt(string prompt)
+    /// <summary>Called by PlayerInteraction. Pass null to hide the prompt. 'keyHint' is the key shown next to it ('' = none).</summary>
+    public void SetPrompt(string prompt, string keyHint = "E")
     {
         bool has = !string.IsNullOrEmpty(prompt);
 
@@ -336,7 +482,11 @@ public class HUDController : MonoBehaviour
             promptPanel.SetActive(has);
 
         if (has && promptText != null)
-            promptText.text = $"{prompt}   <color=#EDB34D>[E]</color>";
+        {
+            promptText.text = string.IsNullOrEmpty(keyHint)
+                ? prompt
+                : $"{prompt}   <color=#EDB34D>[{keyHint}]</color>";
+        }
 
         crosshairTarget = has ? 1.7f : 1f;
     }
@@ -442,10 +592,12 @@ public class HUDController : MonoBehaviour
         RadioController radio = GameSystems.HasInstance ? GameSystems.Instance.Radio : null;
         bool playing = GameState.RadioPlaying;
 
-        radioPowerDot.color = playing ? PowerOn : PowerOff;
-        radioPowerText.text = playing ? "ON" : "OFF";
-        radioPowerText.color = playing ? PowerOn : Dim;
-        radioPlayLabel.text = playing ? "Turn off" : "Turn on";
+        // READY = not started yet, PLAYING, or PAUSED part-way through a track
+        bool paused = !playing && radio != null && radio.IsPaused;
+        radioPowerDot.color = playing ? PowerOn : (paused ? Accent : PowerOff);
+        radioPowerText.text = playing ? "PLAYING" : (paused ? "PAUSED" : "READY");
+        radioPowerText.color = playing ? PowerOn : (paused ? Accent : Dim);
+        radioPlayLabel.text = playing ? "Pause" : (paused ? "Resume" : "Play");
 
         if (radio != null && radio.HasAudio)
         {
@@ -457,7 +609,7 @@ public class HUDController : MonoBehaviour
             radioTrackText.text = "No tape loaded";
             radioPositionText.text = "";
         }
-        radioTrackText.color = playing ? Warm : Dim;
+        radioTrackText.color = (playing || paused) ? Warm : Dim;
 
         radioLastSecond = -1;   // make the time labels redraw
         UpdateRadio(0f);
@@ -557,6 +709,7 @@ public class HUDController : MonoBehaviour
         UpdateTasks(dt, false);
         UpdateClue(dt);
         UpdateRadio(dt);
+        UpdateTidy(dt);
     }
 
     // ------------------------------------------------------------- utils ---

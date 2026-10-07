@@ -1,5 +1,6 @@
 using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 /// <summary>
 /// The one object that survives scene changes. Owns the screen fade and the
@@ -48,6 +49,10 @@ public class GameSystems : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
 
+        // 'Enter the staff room' and friends: remember every scene the player has been in.
+        GameState.Visit(SceneManager.GetActiveScene().name);
+        SceneManager.sceneLoaded += OnSceneLoaded;
+
         Radio = GetComponent<RadioController>();
         if (Radio == null) Radio = gameObject.AddComponent<RadioController>();
 
@@ -69,7 +74,13 @@ public class GameSystems : MonoBehaviour
         if (Instance != this) return;
 
         GameState.Changed -= OnStateChanged;
+        SceneManager.sceneLoaded -= OnSceneLoaded;
         Instance = null;
+    }
+
+    private static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        GameState.Visit(scene.name);
     }
 
     private void OnStateChanged()

@@ -26,7 +26,7 @@ RenderSettings:
   m_AmbientIntensity: 1
   m_AmbientMode: 3
   m_SubtractiveShadowColor: {r: 0.42, g: 0.478, b: 0.627, a: 1}
-  m_SkyboxMaterial: {fileID: 10304, guid: 0000000000000000f000000000000000, type: 0}
+  m_SkyboxMaterial: {fileID: 2100000, guid: 6c93f612f65708b47b9b67bd47c836d7, type: 2}
   m_HaloStrength: 0.5
   m_FlareStrength: 1
   m_FlareFadeSpeed: 3
@@ -2166,6 +2166,18 @@ PrefabInstance:
       value: Door_Room04
       objectReference: {fileID: 0}
     - target: {fileID: 4651603642805868, guid: 50f132ebf2f56c94fb5dda3d12b89795, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 1.014
+      objectReference: {fileID: 0}
+    - target: {fileID: 4651603642805868, guid: 50f132ebf2f56c94fb5dda3d12b89795, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 1.014
+      objectReference: {fileID: 0}
+    - target: {fileID: 4651603642805868, guid: 50f132ebf2f56c94fb5dda3d12b89795, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 1.014
+      objectReference: {fileID: 0}
+    - target: {fileID: 4651603642805868, guid: 50f132ebf2f56c94fb5dda3d12b89795, type: 3}
       propertyPath: m_LocalPosition.x
       value: 2.1
       objectReference: {fileID: 0}
@@ -2208,13 +2220,39 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 1889589370831100, guid: 50f132ebf2f56c94fb5dda3d12b89795, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 333197461}
   m_SourcePrefab: {fileID: 100100000, guid: 50f132ebf2f56c94fb5dda3d12b89795, type: 3}
 --- !u!4 &333197459 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4651603642805868, guid: 50f132ebf2f56c94fb5dda3d12b89795, type: 3}
   m_PrefabInstance: {fileID: 333197458}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &333197460 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1889589370831100, guid: 50f132ebf2f56c94fb5dda3d12b89795, type: 3}
+  m_PrefabInstance: {fileID: 333197458}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &333197461
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 333197460}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 86dcb06244a2b5b41b872cd30ddb0915, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DoorTransition
+  prompt: Interact
+  targetScene: Room04
+  spawnId: FromCorridor
+  displayName: Enter room 4
+  gatedByRoomAccess: 1
+  lockedLabel: Locked
 --- !u!1 &339354646
 GameObject:
   m_ObjectHideFlags: 0
@@ -2868,6 +2906,18 @@ PrefabInstance:
       value: Door_StaffRoom
       objectReference: {fileID: 0}
     - target: {fileID: 4651603642805868, guid: 50f132ebf2f56c94fb5dda3d12b89795, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 1.014
+      objectReference: {fileID: 0}
+    - target: {fileID: 4651603642805868, guid: 50f132ebf2f56c94fb5dda3d12b89795, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 1.014
+      objectReference: {fileID: 0}
+    - target: {fileID: 4651603642805868, guid: 50f132ebf2f56c94fb5dda3d12b89795, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 1.014
+      objectReference: {fileID: 0}
+    - target: {fileID: 4651603642805868, guid: 50f132ebf2f56c94fb5dda3d12b89795, type: 3}
       propertyPath: m_LocalPosition.x
       value: 10.6
       objectReference: {fileID: 0}
@@ -2949,6 +2999,8 @@ MonoBehaviour:
   targetScene: StaffRoom
   spawnId: FromCorridor
   displayName: Enter the staff room
+  gatedByRoomAccess: 0
+  lockedLabel: Locked
 --- !u!1 &451596647
 GameObject:
   m_ObjectHideFlags: 0
@@ -3949,6 +4001,51 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 582381099}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &585053759
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 585053760}
+  - component: {fileID: 585053761}
+  m_Layer: 0
+  m_Name: Spawn_Room01
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &585053760
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 585053759}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: 0.7071068, z: -0, w: -0.7071068}
+  m_LocalPosition: {x: 8.2, y: 0, z: -0.9}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1121410514}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &585053761
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 585053759}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6ee72cfb034c950408b59624be8c7cb7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SpawnPoint
+  spawnId: Room01_Door
 --- !u!1 &592862495
 GameObject:
   m_ObjectHideFlags: 0
@@ -4968,7 +5065,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8762286023885395322, guid: 9c489a8547f4d9e4387da15a4ff82c81, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 1.65
+      value: 1.55
       objectReference: {fileID: 0}
     - target: {fileID: 8762286023885395322, guid: 9c489a8547f4d9e4387da15a4ff82c81, type: 3}
       propertyPath: m_LocalPosition.z
@@ -6346,6 +6443,18 @@ PrefabInstance:
       value: Door_Room03
       objectReference: {fileID: 0}
     - target: {fileID: 4651603642805868, guid: 50f132ebf2f56c94fb5dda3d12b89795, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 1.014
+      objectReference: {fileID: 0}
+    - target: {fileID: 4651603642805868, guid: 50f132ebf2f56c94fb5dda3d12b89795, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 1.014
+      objectReference: {fileID: 0}
+    - target: {fileID: 4651603642805868, guid: 50f132ebf2f56c94fb5dda3d12b89795, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 1.014
+      objectReference: {fileID: 0}
+    - target: {fileID: 4651603642805868, guid: 50f132ebf2f56c94fb5dda3d12b89795, type: 3}
       propertyPath: m_LocalPosition.x
       value: -2.1
       objectReference: {fileID: 0}
@@ -6388,13 +6497,39 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 1889589370831100, guid: 50f132ebf2f56c94fb5dda3d12b89795, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1084463895}
   m_SourcePrefab: {fileID: 100100000, guid: 50f132ebf2f56c94fb5dda3d12b89795, type: 3}
 --- !u!4 &1084463893 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4651603642805868, guid: 50f132ebf2f56c94fb5dda3d12b89795, type: 3}
   m_PrefabInstance: {fileID: 1084463892}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1084463894 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1889589370831100, guid: 50f132ebf2f56c94fb5dda3d12b89795, type: 3}
+  m_PrefabInstance: {fileID: 1084463892}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1084463895
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1084463894}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 86dcb06244a2b5b41b872cd30ddb0915, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DoorTransition
+  prompt: Interact
+  targetScene: Room03
+  spawnId: FromCorridor
+  displayName: Enter room 3
+  gatedByRoomAccess: 1
+  lockedLabel: Locked
 --- !u!1 &1088852628
 GameObject:
   m_ObjectHideFlags: 0
@@ -6618,6 +6753,7 @@ Transform:
   m_Children:
   - {fileID: 739038506}
   - {fileID: 94379369}
+  - {fileID: 585053760}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1132444241
@@ -7305,6 +7441,18 @@ PrefabInstance:
       value: Door_Room06
       objectReference: {fileID: 0}
     - target: {fileID: 4651603642805868, guid: 50f132ebf2f56c94fb5dda3d12b89795, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 1.014
+      objectReference: {fileID: 0}
+    - target: {fileID: 4651603642805868, guid: 50f132ebf2f56c94fb5dda3d12b89795, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 1.014
+      objectReference: {fileID: 0}
+    - target: {fileID: 4651603642805868, guid: 50f132ebf2f56c94fb5dda3d12b89795, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 1.014
+      objectReference: {fileID: 0}
+    - target: {fileID: 4651603642805868, guid: 50f132ebf2f56c94fb5dda3d12b89795, type: 3}
       propertyPath: m_LocalPosition.x
       value: -2.1
       objectReference: {fileID: 0}
@@ -7347,13 +7495,39 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 1889589370831100, guid: 50f132ebf2f56c94fb5dda3d12b89795, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1226373763}
   m_SourcePrefab: {fileID: 100100000, guid: 50f132ebf2f56c94fb5dda3d12b89795, type: 3}
 --- !u!4 &1226373761 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4651603642805868, guid: 50f132ebf2f56c94fb5dda3d12b89795, type: 3}
   m_PrefabInstance: {fileID: 1226373760}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1226373762 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1889589370831100, guid: 50f132ebf2f56c94fb5dda3d12b89795, type: 3}
+  m_PrefabInstance: {fileID: 1226373760}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1226373763
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1226373762}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 86dcb06244a2b5b41b872cd30ddb0915, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DoorTransition
+  prompt: Interact
+  targetScene: Room06
+  spawnId: FromCorridor
+  displayName: Enter room 6
+  gatedByRoomAccess: 1
+  lockedLabel: Locked
 --- !u!1 &1247155561
 GameObject:
   m_ObjectHideFlags: 0
@@ -7582,8 +7756,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1267280036}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0.7071068, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: -0.55, y: 0, z: 0}
+  m_LocalRotation: {x: -0, y: -0.7071068, z: -0, w: 0.7071068}
+  m_LocalPosition: {x: -0.9166202, y: 0.00000033866274, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -7636,7 +7810,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 10100, guid: 0000000000000000e000000000000000, type: 0}
+  - {fileID: 2100000, guid: b33c184198fc0c34db4f84e7233602b4, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -7858,6 +8032,18 @@ PrefabInstance:
       value: Door_Room02
       objectReference: {fileID: 0}
     - target: {fileID: 4651603642805868, guid: 50f132ebf2f56c94fb5dda3d12b89795, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 1.014
+      objectReference: {fileID: 0}
+    - target: {fileID: 4651603642805868, guid: 50f132ebf2f56c94fb5dda3d12b89795, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 1.014
+      objectReference: {fileID: 0}
+    - target: {fileID: 4651603642805868, guid: 50f132ebf2f56c94fb5dda3d12b89795, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 1.014
+      objectReference: {fileID: 0}
+    - target: {fileID: 4651603642805868, guid: 50f132ebf2f56c94fb5dda3d12b89795, type: 3}
       propertyPath: m_LocalPosition.x
       value: 5.8
       objectReference: {fileID: 0}
@@ -7900,13 +8086,39 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 1889589370831100, guid: 50f132ebf2f56c94fb5dda3d12b89795, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1323414909}
   m_SourcePrefab: {fileID: 100100000, guid: 50f132ebf2f56c94fb5dda3d12b89795, type: 3}
 --- !u!4 &1323414907 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4651603642805868, guid: 50f132ebf2f56c94fb5dda3d12b89795, type: 3}
   m_PrefabInstance: {fileID: 1323414906}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1323414908 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1889589370831100, guid: 50f132ebf2f56c94fb5dda3d12b89795, type: 3}
+  m_PrefabInstance: {fileID: 1323414906}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1323414909
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1323414908}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 86dcb06244a2b5b41b872cd30ddb0915, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DoorTransition
+  prompt: Interact
+  targetScene: Room02
+  spawnId: FromCorridor
+  displayName: Enter room 2
+  gatedByRoomAccess: 1
+  lockedLabel: Locked
 --- !u!1 &1356875442
 GameObject:
   m_ObjectHideFlags: 0
@@ -9018,6 +9230,18 @@ PrefabInstance:
       value: Door_Room05
       objectReference: {fileID: 0}
     - target: {fileID: 4651603642805868, guid: 50f132ebf2f56c94fb5dda3d12b89795, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 1.014
+      objectReference: {fileID: 0}
+    - target: {fileID: 4651603642805868, guid: 50f132ebf2f56c94fb5dda3d12b89795, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 1.014
+      objectReference: {fileID: 0}
+    - target: {fileID: 4651603642805868, guid: 50f132ebf2f56c94fb5dda3d12b89795, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 1.014
+      objectReference: {fileID: 0}
+    - target: {fileID: 4651603642805868, guid: 50f132ebf2f56c94fb5dda3d12b89795, type: 3}
       propertyPath: m_LocalPosition.x
       value: 2.1
       objectReference: {fileID: 0}
@@ -9060,13 +9284,39 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 1889589370831100, guid: 50f132ebf2f56c94fb5dda3d12b89795, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1472082306}
   m_SourcePrefab: {fileID: 100100000, guid: 50f132ebf2f56c94fb5dda3d12b89795, type: 3}
 --- !u!4 &1472082304 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4651603642805868, guid: 50f132ebf2f56c94fb5dda3d12b89795, type: 3}
   m_PrefabInstance: {fileID: 1472082303}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1472082305 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1889589370831100, guid: 50f132ebf2f56c94fb5dda3d12b89795, type: 3}
+  m_PrefabInstance: {fileID: 1472082303}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1472082306
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1472082305}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 86dcb06244a2b5b41b872cd30ddb0915, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DoorTransition
+  prompt: Interact
+  targetScene: Room05
+  spawnId: FromCorridor
+  displayName: Enter room 5
+  gatedByRoomAccess: 1
+  lockedLabel: Locked
 --- !u!1 &1485662526
 GameObject:
   m_ObjectHideFlags: 0
@@ -9444,8 +9694,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1550705753}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0.7071068, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: -0.55, y: 0, z: 0}
+  m_LocalRotation: {x: -0, y: -0.7071068, z: -0, w: 0.7071068}
+  m_LocalPosition: {x: -0.9166202, y: -0.0000002709302, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -9498,7 +9748,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 10100, guid: 0000000000000000e000000000000000, type: 0}
+  - {fileID: 2100000, guid: b33c184198fc0c34db4f84e7233602b4, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -9934,8 +10184,8 @@ MonoBehaviour:
   - {fileID: 8300000, guid: 0b0ddb569614cb647834cc877988a61e, type: 3}
   - {fileID: 8300000, guid: f7abffcc2ddf64049b00618ffafcc1ab, type: 3}
   - {fileID: 8300000, guid: 3ce08566e6ed1234795c2a5bd46af8ea, type: 3}
-  volume: 0.25
-  strideLength: 0.85
+  volume: 0.12
+  strideLength: 1.2
   minSpeed: 0.4
   pitchVariation: 0.06
 --- !u!114 &1619005737
@@ -11036,6 +11286,18 @@ PrefabInstance:
       value: Door_Room01
       objectReference: {fileID: 0}
     - target: {fileID: 4651603642805868, guid: 50f132ebf2f56c94fb5dda3d12b89795, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 1.014
+      objectReference: {fileID: 0}
+    - target: {fileID: 4651603642805868, guid: 50f132ebf2f56c94fb5dda3d12b89795, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 1.014
+      objectReference: {fileID: 0}
+    - target: {fileID: 4651603642805868, guid: 50f132ebf2f56c94fb5dda3d12b89795, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 1.014
+      objectReference: {fileID: 0}
+    - target: {fileID: 4651603642805868, guid: 50f132ebf2f56c94fb5dda3d12b89795, type: 3}
       propertyPath: m_LocalPosition.x
       value: 8.2
       objectReference: {fileID: 0}
@@ -11078,13 +11340,39 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 1889589370831100, guid: 50f132ebf2f56c94fb5dda3d12b89795, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1760706579}
   m_SourcePrefab: {fileID: 100100000, guid: 50f132ebf2f56c94fb5dda3d12b89795, type: 3}
 --- !u!4 &1760706577 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4651603642805868, guid: 50f132ebf2f56c94fb5dda3d12b89795, type: 3}
   m_PrefabInstance: {fileID: 1760706576}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1760706578 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1889589370831100, guid: 50f132ebf2f56c94fb5dda3d12b89795, type: 3}
+  m_PrefabInstance: {fileID: 1760706576}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1760706579
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1760706578}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 86dcb06244a2b5b41b872cd30ddb0915, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DoorTransition
+  prompt: Interact
+  targetScene: Room01
+  spawnId: FromCorridor
+  displayName: Enter room 1
+  gatedByRoomAccess: 1
+  lockedLabel: Locked
 --- !u!1 &1792112071
 GameObject:
   m_ObjectHideFlags: 0
@@ -11538,6 +11826,18 @@ PrefabInstance:
       value: Door_Room07
       objectReference: {fileID: 0}
     - target: {fileID: 4651603642805868, guid: 50f132ebf2f56c94fb5dda3d12b89795, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 1.014
+      objectReference: {fileID: 0}
+    - target: {fileID: 4651603642805868, guid: 50f132ebf2f56c94fb5dda3d12b89795, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 1.014
+      objectReference: {fileID: 0}
+    - target: {fileID: 4651603642805868, guid: 50f132ebf2f56c94fb5dda3d12b89795, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 1.014
+      objectReference: {fileID: 0}
+    - target: {fileID: 4651603642805868, guid: 50f132ebf2f56c94fb5dda3d12b89795, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
       objectReference: {fileID: 0}
@@ -11580,13 +11880,39 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 1889589370831100, guid: 50f132ebf2f56c94fb5dda3d12b89795, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1837618539}
   m_SourcePrefab: {fileID: 100100000, guid: 50f132ebf2f56c94fb5dda3d12b89795, type: 3}
 --- !u!4 &1837618537 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4651603642805868, guid: 50f132ebf2f56c94fb5dda3d12b89795, type: 3}
   m_PrefabInstance: {fileID: 1837618536}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1837618538 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1889589370831100, guid: 50f132ebf2f56c94fb5dda3d12b89795, type: 3}
+  m_PrefabInstance: {fileID: 1837618536}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1837618539
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1837618538}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 86dcb06244a2b5b41b872cd30ddb0915, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DoorTransition
+  prompt: Interact
+  targetScene: Room07
+  spawnId: FromCorridor
+  displayName: Enter room 7
+  gatedByRoomAccess: 1
+  lockedLabel: Locked
 --- !u!1 &1853837629
 GameObject:
   m_ObjectHideFlags: 0
@@ -11810,8 +12136,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1886668686}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0.7071068, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: -0.53, y: 0, z: 0}
+  m_LocalRotation: {x: -0, y: 0.7071068, z: 0, w: 0.7071068}
+  m_LocalPosition: {x: 0.89998245, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -11864,7 +12190,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 10100, guid: 0000000000000000e000000000000000, type: 0}
+  - {fileID: 2100000, guid: b33c184198fc0c34db4f84e7233602b4, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -12566,7 +12892,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9005220659476430818, guid: 2d3a85ecde41a8246a79669975912b74, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 1.65
+      value: 1.55
       objectReference: {fileID: 0}
     - target: {fileID: 9005220659476430818, guid: 2d3a85ecde41a8246a79669975912b74, type: 3}
       propertyPath: m_LocalPosition.z

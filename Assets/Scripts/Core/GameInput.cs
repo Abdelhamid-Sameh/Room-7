@@ -31,6 +31,22 @@ public static class GameInput
         }
     }
 
+    /// <summary>E, Left Mouse Button or Pad North while it is held down (for hold interactions).</summary>
+    public static bool InteractHeld
+    {
+        get
+        {
+            Keyboard kb = Keyboard.current;
+            if (kb != null && kb.eKey.isPressed) return true;
+
+            Mouse mouse = Mouse.current;
+            if (mouse != null && mouse.leftButton.isPressed) return true;
+
+            Gamepad pad = Gamepad.current;
+            return pad != null && pad.buttonNorth.isPressed;
+        }
+    }
+
     /// <summary>Esc, or Start on a gamepad - pause / resume.</summary>
     public static bool PausePressed
     {

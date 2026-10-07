@@ -30,12 +30,44 @@ public static class GameState
     public static bool UniformTaken;
     public static bool UniformWorn;
 
+    /// <summary>The three things Nabil collects in the staff room before his first room.</summary>
+    public static bool HasAllThings => HasCleaningKit && HasRadio && UniformWorn;
+
+    // --- rooms -------------------------------------------------------------
+    /// <summary>Names of every scene the player has been in. 'Enter the staff room' is done by this.</summary>
+    public static readonly HashSet<string> VisitedScenes = new HashSet<string>();
+
+    public static bool HasVisited(string scene) { return VisitedScenes.Contains(scene); }
+
+    public static void Visit(string scene)
+    {
+        if (!string.IsNullOrEmpty(scene) && VisitedScenes.Add(scene)) RaiseChanged();
+    }
+
+    /// <summary>Rooms whose every untidy thing has been put right.</summary>
+    public static readonly HashSet<string> CleanedRooms = new HashSet<string>();
+
+    public static bool IsRoomCleaned(string roomId) { return CleanedRooms.Contains(roomId); }
+
+    public static void SetRoomCleaned(string roomId)
+    {
+        if (!string.IsNullOrEmpty(roomId) && CleanedRooms.Add(roomId)) RaiseChanged();
+    }
+
+    /// <summary>'Room01/Chair' style keys of everything already tidied, so a room stays tidy when you come back.</summary>
+    public static readonly HashSet<string> TidiedItems = new HashSet<string>();
+
+    // --- live tidy read-out for the room the player is in (set by TidyRoom, drawn by the HUD) ---
+    public static string TidyRoomLabel = "";
+    public static int TidyDone;
+    public static int TidyTotal;
+
     // --- narrative flags -------------------------------------------------
     /// <summary>Nabil looked at Malak's uniform in her locker.</summary>
     public static bool MalakUniformInspected;
 
     // --- clues -------------------------------------------------------------
-    public const string ClueMalakUniform = "Malak's uniform is folded in her locker.";
+    public const string ClueMalakUniform = "Malak's uniform is still folded in her locker.";
 
     /// <summary>
     /// Every clue the player has found, in the order found. The HUD flashes each one once when it
@@ -84,6 +116,13 @@ public static class GameState
 
         UniformTaken = false;
         UniformWorn = false;
+
+        VisitedScenes.Clear();
+        CleanedRooms.Clear();
+        TidiedItems.Clear();
+        TidyRoomLabel = "";
+        TidyDone = 0;
+        TidyTotal = 0;
 
         MalakUniformInspected = false;
         Clues.Clear();

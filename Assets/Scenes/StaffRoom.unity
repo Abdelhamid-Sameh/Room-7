@@ -12484,8 +12484,8 @@ MonoBehaviour:
   - {fileID: 8300000, guid: 0b0ddb569614cb647834cc877988a61e, type: 3}
   - {fileID: 8300000, guid: f7abffcc2ddf64049b00618ffafcc1ab, type: 3}
   - {fileID: 8300000, guid: 3ce08566e6ed1234795c2a5bd46af8ea, type: 3}
-  volume: 0.25
-  strideLength: 0.85
+  volume: 0.12
+  strideLength: 1.2
   minSpeed: 0.4
   pitchVariation: 0.06
 --- !u!114 &1619005737

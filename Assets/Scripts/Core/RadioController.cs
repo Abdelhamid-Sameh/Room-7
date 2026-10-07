@@ -3,10 +3,11 @@ using UnityEngine;
 /// <summary>
 /// The portable radio Nabil picks up in the staff room.
 ///
-/// A simple on/off player with next / previous track and a playlist - no stations. Playback state
-/// lives in GameState so it survives scene changes; the AudioSource lives on the persistent
-/// GameSystems object. With more than one track it moves on to the next one by itself when a
-/// track ends; with a single track it loops.
+/// R plays and pauses (a paused track carries on from the same second), T / Y go to the next /
+/// previous track (they never change whether the radio is playing or paused). With more than one
+/// track it moves on to the next one by itself when a track ends; with a single track it loops.
+/// Playback state lives in GameState so it survives scene changes; the AudioSource lives on the
+/// persistent GameSystems object.
 ///
 /// Mix: the radio's own level (Volume) x the player's Master and Music levels (AudioLevels).
 /// Playlist: the "Playlist" asset (tracks + the names shown) - edit it in one place for both scenes.
@@ -23,9 +24,8 @@ public class RadioController : MonoBehaviour
     private static RadioController instance;
     private AudioSource source;
 
-    // Used to tell a track that really ended from a stream that has not started yet (big streamed
-    // files take a moment) or a one-off audio hiccup.
-    private bool wasPlaying;
+    private bool isPaused;     // paused part-way through the current track
+    private bool wasPlaying;   // used to tell a track that really ended from a stream that has not started yet
     private float lastTime;
 
     public int TrackCount => playlist != null ? playlist.Count : 0;
@@ -37,8 +37,11 @@ public class RadioController : MonoBehaviour
 
     public string TrackPosition => HasAudio ? $"{CurrentIndex + 1} / {TrackCount}" : "";
 
-    /// <summary>Seconds played of the current track (0 while the radio is off).</summary>
-    public float Elapsed => source != null && source.clip != null && source.isPlaying ? source.time : 0f;
+    /// <summary>True while the radio is paused part-way through a track (R carries on from there).</summary>
+    public bool IsPaused => isPaused;
+
+    /// <summary>Seconds played of the current track. Kept while paused, 0 for a track not started yet.</summary>
+    public float Elapsed => source != null && source.clip != null ? source.time : 0f;
 
     /// <summary>Length in seconds of the current track.</summary>
     public float Duration
@@ -96,7 +99,7 @@ public class RadioController : MonoBehaviour
     {
         if (!GameState.HasRadio || PauseMenu.IsPaused) return;
 
-        if (GameInput.RadioPlayPressed) TogglePower();
+        if (GameInput.RadioPlayPressed) TogglePlayPause();
         else if (GameInput.RadioNextPressed) NextTrack();
         else if (GameInput.RadioPrevPressed) PreviousTrack();
 
@@ -127,15 +130,21 @@ public class RadioController : MonoBehaviour
         else Apply();
     }
 
-    /// <summary>R - on / off.</summary>
-    public void TogglePower()
+    /// <summary>R - play, or pause (the track carries on from the same second).</summary>
+    public void TogglePlayPause()
     {
         GameState.RadioPlaying = !GameState.RadioPlaying;
         Apply();
         GameState.RaiseChanged();
     }
 
-    /// <summary>T - next song (wraps around). Does not change on/off state.</summary>
+    /// <summary>Kept for older callers - same as TogglePlayPause.</summary>
+    public void TogglePower()
+    {
+        TogglePlayPause();
+    }
+
+    /// <summary>T - next song (wraps around). Keeps playing or stays paused, as it was.</summary>
     public void NextTrack()
     {
         int count = Mathf.Max(1, TrackCount);
@@ -144,7 +153,7 @@ public class RadioController : MonoBehaviour
         GameState.RaiseChanged();
     }
 
-    /// <summary>Y - previous song (wraps around). Does not change on/off state.</summary>
+    /// <summary>Y - previous song (wraps around). Keeps playing or stays paused, as it was.</summary>
     public void PreviousTrack()
     {
         int count = Mathf.Max(1, TrackCount);
@@ -160,26 +169,50 @@ public class RadioController : MonoBehaviour
 
         source.loop = TrackCount <= 1;
 
-        if (!GameState.RadioPlaying || !HasAudio)
-        {
-            source.Stop();
-            return;
-        }
-
-        AudioClip wanted = playlist.ClipAt(CurrentIndex);
+        AudioClip wanted = HasAudio ? playlist.ClipAt(CurrentIndex) : null;
         if (wanted == null)
         {
             source.Stop();
+            source.clip = null;
+            isPaused = false;
+            wasPlaying = false;
             return;
         }
 
-        if (source.clip != wanted || !source.isPlaying)
+        // A different track than the one loaded: it starts again from the beginning.
+        if (source.clip != wanted)
         {
+            source.Stop();
             source.clip = wanted;
-            ApplyVolume();
+            isPaused = false;
             wasPlaying = false;
             lastTime = 0f;
-            source.Play();
+            ApplyVolume();
+        }
+
+        if (GameState.RadioPlaying)
+        {
+            if (!source.isPlaying)
+            {
+                if (isPaused)
+                {
+                    source.UnPause();
+                    if (!source.isPlaying) source.Play();
+                }
+                else
+                {
+                    source.Play();
+                }
+
+                isPaused = false;
+                wasPlaying = false;
+            }
+        }
+        else if (source.isPlaying)
+        {
+            source.Pause();
+            isPaused = true;
+            wasPlaying = false;
         }
     }
 
