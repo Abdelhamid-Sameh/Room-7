@@ -43,6 +43,7 @@ public class HUDController : MonoBehaviour
     {
         public string Label;
         public System.Func<bool> IsDone;
+        public int Group;      // tasks of one group are on screen together; the group leaves when all are done
     }
 
     private class TaskRow
@@ -67,6 +68,10 @@ public class HUDController : MonoBehaviour
     private TaskRow[] taskRows;
     private bool tasksInitialized;
     private float tasksCardHeight;
+    private int shownGroup = -2;
+    private int wantedGroup = -2;
+    private float groupSwitchAt;
+    private const float GroupLingerSeconds = 1.8f;
 
     private GameObject cluePanel;
     private CanvasGroup clueGroup;
@@ -144,24 +149,128 @@ public class HUDController : MonoBehaviour
         crosshair = dot;
     }
 
+    private RectTransform promptKeyRow;
+    private RectTransform promptKeyBox;
+    private TMP_Text promptKeyText;
+    private RectTransform promptMouse;
+    private static Sprite mouseSprite;
+
     private void BuildPrompt()
     {
         RectTransform card = NewCard("PromptCard", new Vector2(0.5f, 0f), new Vector2(0.5f, 0f),
-                                     new Vector2(0f, 175f), new Vector2(640f, 62f), null, 1f);
+                                     new Vector2(0f, 135f), new Vector2(720f, 62f), null, 1f);
         promptPanel = card.gameObject;
 
         promptText = NewText("Prompt", card, 30, TextAlignmentOptions.Center, true);
-        Fill(promptText.rectTransform, new Vector2(20f, 4f), new Vector2(-20f, -6f));
+        Place(promptText.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(500f, 50f));
         promptText.text = "";
 
-        // Static control reminder, always visible.
-        TMP_Text hint = NewText("Controls", transform, 20, TextAlignmentOptions.Center, false);
-        Place(hint.rectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f),
-              new Vector2(0f, 122f), new Vector2(900f, 40f));
-        hint.text = "E  /  Left Click - interact";
-        SetAlpha(hint, 0.55f);
+        // 'E' key chip + a mouse with its left button glowing, shown to the right of the text.
+        GameObject rowGo = new GameObject("Keys", typeof(RectTransform));
+        rowGo.transform.SetParent(card, false);
+        promptKeyRow = (RectTransform)rowGo.transform;
+        Place(promptKeyRow, new Vector2(0.5f, 0.5f), new Vector2(0f, 0.5f), Vector2.zero, new Vector2(120f, 40f));
+
+        Image boxOuter = NewImage("KeyBox", promptKeyRow, Accent);
+        promptKeyBox = boxOuter.rectTransform;
+        Place(promptKeyBox, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), Vector2.zero, new Vector2(34f, 34f));
+        Image boxInner = NewImage("Fill", promptKeyBox, BoxFill);
+        Fill(boxInner.rectTransform, new Vector2(2f, 2f), new Vector2(-2f, -2f));
+        promptKeyText = NewText("Key", promptKeyBox, 22, TextAlignmentOptions.Center, false);
+        Fill(promptKeyText.rectTransform, Vector2.zero, Vector2.zero);
+        promptKeyText.color = Accent;
+
+        Image mouse = NewImage("Mouse", promptKeyRow, Color.white);
+        mouse.sprite = GetMouseSprite();
+        mouse.preserveAspect = true;
+        promptMouse = mouse.rectTransform;
+        Place(promptMouse, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(44f, 0f), new Vector2(26f, 38f));
 
         promptPanel.SetActive(false);
+    }
+
+    /// <summary>Centres 'text  [key] [mouse]' as one group inside the prompt card.</summary>
+    private void LayoutPromptKeys(string keyHint)
+    {
+        bool hasKey = !string.IsNullOrEmpty(keyHint);
+        promptKeyRow.gameObject.SetActive(hasKey);
+
+        promptText.ForceMeshUpdate();
+        float textW = Mathf.Min(promptText.preferredWidth, 520f);
+        float boxW = hasKey ? (keyHint.Length > 1 ? 78f : 34f) : 0f;
+        float rowW = hasKey ? boxW + 10f + 26f : 0f;
+        float gap = hasKey ? 24f : 0f;
+        float total = textW + gap + rowW;
+
+        promptText.rectTransform.sizeDelta = new Vector2(textW + 8f, 50f);
+        promptText.rectTransform.anchoredPosition = new Vector2(-total * 0.5f + textW * 0.5f, 0f);
+
+        if (!hasKey) return;
+        promptKeyText.text = keyHint;
+        promptKeyText.fontSize = keyHint.Length > 1 ? 19f : 22f;
+        promptKeyBox.sizeDelta = new Vector2(boxW, 34f);
+        promptMouse.anchoredPosition = new Vector2(boxW + 10f, 0f);
+        promptKeyRow.sizeDelta = new Vector2(rowW, 40f);
+        promptKeyRow.anchoredPosition = new Vector2(-total * 0.5f + textW + gap, 0f);
+    }
+
+    /// <summary>A small mouse drawn in code: outline, two buttons, the left one glowing amber.</summary>
+    private static Sprite GetMouseSprite()
+    {
+        if (mouseSprite != null) return mouseSprite;
+
+        const int W = 64, H = 96;
+        Texture2D tex = new Texture2D(W, H, TextureFormat.RGBA32, false);
+        tex.filterMode = FilterMode.Bilinear;
+        tex.wrapMode = TextureWrapMode.Clamp;
+        Color[] px = new Color[W * H];
+
+        Vector2 centre = new Vector2(32f, 44f);
+        Vector2 half = new Vector2(20f, 36f);
+        float radius = 18f;
+        Color line = new Color(0.92f, 0.88f, 0.80f, 1f);
+        Color body = new Color(0.07f, 0.07f, 0.07f, 0.6f);
+        Color amber = new Color(1f, 0.76f, 0.30f, 1f);
+
+        for (int y = 0; y < H; y++)
+        {
+            for (int x = 0; x < W; x++)
+            {
+                Vector2 p = new Vector2(x + 0.5f, y + 0.5f) - centre;
+                Vector2 q = new Vector2(Mathf.Abs(p.x), Mathf.Abs(p.y)) - (half - Vector2.one * radius);
+                float sd = new Vector2(Mathf.Max(q.x, 0f), Mathf.Max(q.y, 0f)).magnitude + Mathf.Min(Mathf.Max(q.x, q.y), 0f) - radius;
+
+                bool buttons = y >= 54;
+                bool left = x < 32;
+
+                // soft glow around the left button
+                float dx = Mathf.Max(12f - x, 0f, x - 32f);
+                float dy = Mathf.Max(54f - y, 0f, y - 80f);
+                float glow = Mathf.Clamp01(1f - Mathf.Sqrt(dx * dx + dy * dy) / 11f);
+                glow = glow * glow * 0.6f;
+
+                Color c = new Color(amber.r, amber.g, amber.b, glow);
+
+                if (sd < 0f)
+                {
+                    c = body;
+                    if (buttons && left) c = Color.Lerp(amber, new Color(1f, 0.9f, 0.6f, 1f), Mathf.Clamp01((y - 54f) / 26f) * 0.5f);
+                    else c = Color.Lerp(c, new Color(amber.r, amber.g, amber.b, 1f), glow * 0.5f);
+                }
+
+                bool outline = Mathf.Abs(sd) <= 1.4f;
+                bool divider = sd < 0f && ((buttons && y <= 55) || (buttons && x >= 31 && x <= 32));
+                if (outline || divider) c = line;
+
+                px[y * W + x] = c;
+            }
+        }
+
+        tex.SetPixels(px);
+        tex.Apply();
+        mouseSprite = Sprite.Create(tex, new Rect(0f, 0f, W, H), new Vector2(0.5f, 0.5f), 100f);
+        mouseSprite.name = "MouseIcon";
+        return mouseSprite;
     }
 
     /// <summary>
@@ -176,13 +285,15 @@ public class HUDController : MonoBehaviour
         tasksCardHeight = 78f;
 
         // Add or reorder tasks here. Order = the order they are revealed in.
+        // Tasks are grouped: one group is on screen at a time. When its last task is ticked it lingers a
+        // moment, then the whole group leaves and the next group arrives.
         TaskDef[] defs =
         {
-            new TaskDef { Label = "Enter the staff room",         IsDone = () => GameState.HasVisited("StaffRoom") },
-            new TaskDef { Label = "Put on your uniform",         IsDone = () => GameState.UniformWorn },
-            new TaskDef { Label = "Take the cleaning supplies",  IsDone = () => GameState.HasCleaningKit },
-            new TaskDef { Label = "Take the radio",              IsDone = () => GameState.HasRadio },
-            new TaskDef { Label = "Clean room 1",                IsDone = () => GameState.IsRoomCleaned("Room01") },
+            new TaskDef { Group = 0, Label = "Enter the staff room",        IsDone = () => GameState.HasVisited("StaffRoom") },
+            new TaskDef { Group = 1, Label = "Put on your uniform",         IsDone = () => GameState.UniformWorn },
+            new TaskDef { Group = 1, Label = "Take the cleaning supplies",  IsDone = () => GameState.HasCleaningKit },
+            new TaskDef { Group = 1, Label = "Take the radio",              IsDone = () => GameState.HasRadio },
+            new TaskDef { Group = 2, Label = "Clean room 1",                IsDone = () => GameState.IsRoomCleaned("Room01") },
         };
 
         taskRows = new TaskRow[defs.Length];
@@ -483,9 +594,8 @@ public class HUDController : MonoBehaviour
 
         if (has && promptText != null)
         {
-            promptText.text = string.IsNullOrEmpty(keyHint)
-                ? prompt
-                : $"{prompt}   <color=#EDB34D>[{keyHint}]</color>";
+            promptText.text = prompt;
+            LayoutPromptKeys(keyHint);
         }
 
         crosshairTarget = has ? 1.7f : 1f;
@@ -525,33 +635,59 @@ public class HUDController : MonoBehaviour
             row.Label.color = done ? Dim : Warm;
         }
 
-        // Every finished task stays; only the first unfinished one is shown.
+        // Which group is current: the one holding the first unfinished task (-1 = everything is done).
+        int want = -1;
+        for (int i = 0; i < taskRows.Length; i++)
+            if (!taskRows[i].Done) { want = taskRows[i].Def.Group; break; }
+
+        if (!tasksInitialized)
+        {
+            shownGroup = want;
+            wantedGroup = want;
+        }
+        else if (want != wantedGroup)
+        {
+            wantedGroup = want;
+            groupSwitchAt = Time.unscaledTime + GroupLingerSeconds;   // let the player see the last tick first
+        }
+
+        ApplyTaskVisibility(animate && anyCompleted ? 0.9f : 0f);
+
+        UpdateTasks(0f, !tasksInitialized);
+        tasksInitialized = true;
+    }
+
+    /// <summary>Inside the shown group, finished tasks stay and only the first unfinished one is visible.</summary>
+    private void ApplyTaskVisibility(float revealDelay)
+    {
         bool pendingSeen = false;
         for (int i = 0; i < taskRows.Length; i++)
         {
             TaskRow row = taskRows[i];
-            bool visible = row.Done || !pendingSeen;
-            if (!row.Done) pendingSeen = true;
+            bool inGroup = row.Def.Group == shownGroup;
+            bool visible = inGroup && (row.Done || !pendingSeen);
+            if (inGroup && !row.Done) pendingSeen = true;
 
             if (visible && !row.Visible)
-            {
-                // A new task shows up a moment after the previous one is ticked off.
-                bool delayed = animate && !row.Done && anyCompleted;
-                row.RevealAt = delayed ? Time.unscaledTime + 0.9f : Time.unscaledTime - 1f;
-            }
+                row.RevealAt = (tasksInitialized && !row.Done && revealDelay > 0f) ? Time.unscaledTime + revealDelay : Time.unscaledTime - 1f;
 
             row.Visible = visible;
         }
-
-        UpdateTasks(0f, !tasksInitialized);
-        tasksInitialized = true;
     }
 
     private void UpdateTasks(float dt, bool snap)
     {
         if (taskRows == null || tasksCard == null) return;
 
+        // the finished group has had its moment: swap to the next one
+        if (shownGroup != wantedGroup && Time.unscaledTime >= groupSwitchAt)
+        {
+            shownGroup = wantedGroup;
+            ApplyTaskVisibility(0.45f);
+        }
+
         int slot = 0;
+        bool anyShown = false;
         for (int i = 0; i < taskRows.Length; i++)
         {
             TaskRow row = taskRows[i];
@@ -572,6 +708,7 @@ public class HUDController : MonoBehaviour
 
             bool show = revealed || row.Alpha > 0.001f;
             if (row.Root.gameObject.activeSelf != show) row.Root.gameObject.SetActive(show);
+            if (show) anyShown = true;
 
             if (revealed) slot++;
         }
@@ -579,6 +716,9 @@ public class HUDController : MonoBehaviour
         float targetHeight = 34f + Mathf.Max(slot, 1) * TaskStep + 14f;
         tasksCardHeight = snap ? targetHeight : Mathf.Lerp(tasksCardHeight, targetHeight, dt * 10f);
         tasksCard.sizeDelta = new Vector2(CardWidth, tasksCardHeight);
+
+        // no tasks on screen (between groups, or all done): the card goes too
+        if (tasksCard.gameObject.activeSelf != anyShown) tasksCard.gameObject.SetActive(anyShown);
     }
 
     private void RefreshRadio()

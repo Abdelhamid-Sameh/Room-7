@@ -48,6 +48,11 @@ public class TidyItem : Interactable
     [Tooltip("Renderers (smudges, dust) that fade away while the player holds the button.")]
     [SerializeField] private Renderer[] fadeOnHold;
 
+    [Header("Soft body (optional) - e.g. a blanket")]
+    [Tooltip("A SkinnedMeshRenderer with a blend shape that holds the crumpled, untidy shape. 100 = untidy, 0 = tidy. Put this item's pose offset to zero if the shape does all the work.")]
+    [SerializeField] private SkinnedMeshRenderer softBody;
+    [SerializeField] private int softShapeIndex = 0;
+
     [Header("Look")]
     [SerializeField] private Color glowColor = new Color(1f, 0.72f, 0.28f);
     [Tooltip("How strongly it glows while untidy. 0 = no glow.")]
@@ -108,7 +113,17 @@ public class TidyItem : Interactable
         if (TidyRoom.Instance != null) TidyRoom.Instance.Register(this);
 
         if (GameState.TidiedItems.Contains(Key)) ApplyTidyInstantly();
-        else if (showMarker && markerSprite != null) CreateMarker();
+        else
+        {
+            SetSoft(100f);
+            if (showMarker && markerSprite != null) CreateMarker();
+        }
+    }
+
+    private void SetSoft(float weight)
+    {
+        if (softBody != null && softBody.sharedMesh != null && softBody.sharedMesh.blendShapeCount > softShapeIndex)
+            softBody.SetBlendShapeWeight(softShapeIndex, weight);
     }
 
     // ------------------------------------------------------------------ looks --
@@ -274,17 +289,26 @@ public class TidyItem : Interactable
         Quaternion r0 = transform.localRotation;
         Vector3 p1 = tidyPosition;
         Quaternion r1 = Quaternion.Euler(tidyEuler);
+        float w0 = softBody != null && softBody.sharedMesh != null && softBody.sharedMesh.blendShapeCount > softShapeIndex ? softBody.GetBlendShapeWeight(softShapeIndex) : 0f;
+
+        // Things that have a long way to go take longer and hop a little, so the move can be followed by eye.
+        float dist = transform.parent != null ? transform.parent.TransformVector(p1 - p0).magnitude : (p1 - p0).magnitude;
+        float duration = Mathf.Clamp(moveSeconds + dist * 0.25f, moveSeconds, 1.4f);
+        float hop = Mathf.Min(0.18f, dist * 0.12f);
 
         float t = 0f;
         while (t < 1f)
         {
-            t += Time.deltaTime / Mathf.Max(0.05f, moveSeconds);
+            t += Time.deltaTime / Mathf.Max(0.05f, duration);
             float e = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(t));
             transform.localPosition = Vector3.Lerp(p0, p1, e);
             transform.localRotation = Quaternion.Slerp(r0, r1, e);
+            transform.position += Vector3.up * (Mathf.Sin(Mathf.PI * e) * hop);
+            SetSoft(Mathf.Lerp(w0, 0f, e));
             yield return null;
         }
 
+        SetSoft(0f);
         transform.localPosition = p1;
         transform.localRotation = r1;
         busy = false;
@@ -299,13 +323,19 @@ public class TidyItem : Interactable
         Vector3 s0 = transform.localScale;
         Vector3 p1 = disposeTarget != null ? disposeTarget.position : p0 + Vector3.up * 0.5f;
 
+        // Lifted, carried over in an arc, and only shrunk near the end - so it is seen travelling.
+        float dist = Vector3.Distance(p0, p1);
+        float duration = Mathf.Clamp(0.5f + dist * 0.22f, 0.7f, 1.5f);
+        float arc = 0.25f + dist * 0.07f;
+
         float t = 0f;
         while (t < 1f)
         {
-            t += Time.deltaTime / Mathf.Max(0.05f, moveSeconds * 1.2f);
+            t += Time.deltaTime / duration;
             float e = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(t));
-            transform.position = Vector3.Lerp(p0, p1, e) + Vector3.up * (Mathf.Sin(Mathf.PI * e) * 0.3f);
-            transform.localScale = Vector3.Lerp(s0, s0 * 0.2f, e);
+            float shrink = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.5f, 1f, e));
+            transform.position = Vector3.Lerp(p0, p1, e) + Vector3.up * (Mathf.Sin(Mathf.PI * e) * arc);
+            transform.localScale = Vector3.Lerp(s0, s0 * 0.05f, shrink);
             yield return null;
         }
 
@@ -340,6 +370,7 @@ public class TidyItem : Interactable
         switch (mode)
         {
             case TidyMode.Restore:
+                SetSoft(0f);
                 transform.localPosition = tidyPosition;
                 transform.localRotation = Quaternion.Euler(tidyEuler);
                 break;
