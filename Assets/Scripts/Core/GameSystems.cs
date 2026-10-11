@@ -59,6 +59,7 @@ public class GameSystems : MonoBehaviour
         BuildFade();
         BuildHud();
         BuildPause();
+        gameObject.AddComponent<PhoneUI>().Build(hudFont);
 
         GameState.Changed += OnStateChanged;
     }

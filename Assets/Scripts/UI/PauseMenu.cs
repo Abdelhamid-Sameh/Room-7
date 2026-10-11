@@ -6,13 +6,12 @@ using UnityEngine.UI;
 
 /// <summary>
 /// Esc (or Start on a gamepad) pauses the game: time and all audio freeze, the player stops moving
-/// and looking, the cursor appears, and a small menu offers Resume and Quit. Esc again resumes.
+/// and looking, the cursor appears, and a menu with three tabs opens - Menu (Resume / Quit), Clues
+/// (everything in GameState.Clues) and Messages (GameState.Messages grouped by contact; Malak only
+/// shows up once Nabil has texted her). Esc again resumes.
 ///
 /// Lives on the persistent GameSystems object and builds its own UI from code (same look as the
 /// HUD cards). Other scripts check PauseMenu.IsPaused to ignore input while the game is paused.
-///
-/// Later additions (audio sliders bound to AudioLevels, the clue journal from GameState.Clues) can
-/// simply be added as more rows in Build.
 /// </summary>
 [DisallowMultipleComponent]
 public class PauseMenu : MonoBehaviour
@@ -31,10 +30,20 @@ public class PauseMenu : MonoBehaviour
     private static readonly Color Accent = new Color(0.93f, 0.70f, 0.30f);
     private static readonly Color ButtonNormal = new Color(0.16f, 0.16f, 0.17f, 1f);
     private static readonly Color ButtonHover = new Color(0.30f, 0.25f, 0.15f, 1f);
+    private static readonly Color PanelFill = new Color(0.10f, 0.10f, 0.11f, 1f);
+    private static readonly string[] TabNames = { "Menu", "Clues", "Messages" };
 
     private TMP_FontAsset font;
     private GameObject overlay;
     private MonoBehaviour playerController;
+
+    private readonly GameObject[] pages = new GameObject[3];
+    private readonly Button[] tabButtons = new Button[3];
+    private readonly TMP_Text[] tabLabels = new TMP_Text[3];
+    private RectTransform cluesContent;
+    private RectTransform contactsContent;
+    private ChatView chat;
+    private string selectedContact;
 
     // -------------------------------------------------------------- build --
 
@@ -70,7 +79,7 @@ public class PauseMenu : MonoBehaviour
         RectTransform cardRt = card.rectTransform;
         cardRt.anchorMin = cardRt.anchorMax = new Vector2(0.5f, 0.5f);
         cardRt.pivot = new Vector2(0.5f, 0.5f);
-        cardRt.sizeDelta = new Vector2(480f, 330f);
+        cardRt.sizeDelta = new Vector2(1100f, 720f);
         cardRt.anchoredPosition = Vector2.zero;
 
         Image edge = NewImage("TopEdge", card.transform, Accent);
@@ -81,19 +90,82 @@ public class PauseMenu : MonoBehaviour
         er.anchoredPosition = Vector2.zero;
         er.sizeDelta = new Vector2(0f, 4f);
 
-        TMP_Text title = NewText("Title", card.transform, 36, TextAlignmentOptions.Center);
-        Place(title.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -40f), new Vector2(440f, 56f));
+        TMP_Text title = NewText("Title", card.transform, 34, TextAlignmentOptions.Center);
+        Place(title.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -26f), new Vector2(440f, 50f));
         title.text = "P A U S E D";
 
-        NewButton(card.transform, "Resume", -128f, Resume);
-        NewButton(card.transform, "Quit", -204f, Quit);
+        for (int i = 0; i < 3; i++)
+        {
+            int index = i;
+            tabButtons[i] = NewButton(card.transform, TabNames[i], -92f, () => { Sfx.Play(SfxKind.Tab); SetTab(index); },
+                                      new Vector2((i - 1) * 216f, 0f), new Vector2(200f, 48f), 24, out tabLabels[i]);
+        }
 
         TMP_Text hint = NewText("Hint", card.transform, 18, TextAlignmentOptions.Center);
-        Place(hint.rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, 26f), new Vector2(440f, 28f));
+        Place(hint.rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, 20f), new Vector2(440f, 28f));
         hint.color = Dim;
         hint.text = "Esc - resume";
 
+        // Pages share one content area under the tabs.
+        RectTransform area = new GameObject("Pages", typeof(RectTransform)).GetComponent<RectTransform>();
+        area.SetParent(card.transform, false);
+        area.anchorMin = Vector2.zero;
+        area.anchorMax = Vector2.one;
+        area.offsetMin = new Vector2(40f, 56f);
+        area.offsetMax = new Vector2(-40f, -160f);
+
+        BuildMenuPage(area);
+        BuildCluesPage(area);
+        BuildMessagesPage(area);
+
         overlay.SetActive(false);
+    }
+
+    private void BuildMenuPage(Transform parent)
+    {
+        pages[0] = NewPage("MenuPage", parent);
+        TMP_Text l;
+        NewButton(pages[0].transform, "Resume", -90f, Resume, Vector2.zero, new Vector2(360f, 56f), 26, out l);
+        NewButton(pages[0].transform, "Quit", -170f, Quit, Vector2.zero, new Vector2(360f, 56f), 26, out l);
+    }
+
+    private void BuildCluesPage(Transform parent)
+    {
+        pages[1] = NewPage("CluesPage", parent);
+        Image bg = NewImage("Bg", pages[1].transform, PanelFill);
+        Fill(bg.rectTransform);
+        PhoneUI.NewScroll(pages[1].transform, out cluesContent, 10f, 12);
+    }
+
+    private void BuildMessagesPage(Transform parent)
+    {
+        pages[2] = NewPage("MessagesPage", parent);
+
+        Image left = NewImage("Contacts", pages[2].transform, PanelFill);
+        RectTransform lr = left.rectTransform;
+        lr.anchorMin = Vector2.zero;
+        lr.anchorMax = new Vector2(0f, 1f);
+        lr.pivot = new Vector2(0f, 0.5f);
+        lr.offsetMin = Vector2.zero;
+        lr.sizeDelta = new Vector2(300f, 0f);
+        lr.anchoredPosition = Vector2.zero;
+        PhoneUI.NewScroll(left.transform, out contactsContent, 8f, 10);
+
+        Image right = NewImage("Conversation", pages[2].transform, PanelFill);
+        RectTransform rr = right.rectTransform;
+        rr.anchorMin = Vector2.zero;
+        rr.anchorMax = Vector2.one;
+        rr.offsetMin = new Vector2(316f, 0f);
+        rr.offsetMax = Vector2.zero;
+        chat = ChatView.Create(right.transform, font, 520f);
+    }
+
+    private static GameObject NewPage(string name, Transform parent)
+    {
+        GameObject go = new GameObject(name, typeof(RectTransform));
+        go.transform.SetParent(parent, false);
+        Fill((RectTransform)go.transform);
+        return go;
     }
 
     private static void EnsureEventSystem()
@@ -104,6 +176,139 @@ public class PauseMenu : MonoBehaviour
         InputSystemUIInputModule module = es.AddComponent<InputSystemUIInputModule>();
         module.AssignDefaultActions();
         es.transform.SetParent(GameSystems.HasInstance ? GameSystems.Instance.transform : null, false);
+    }
+
+    // ---------------------------------------------------------------- tabs --
+
+    private void SetTab(int index)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+            pages[i].SetActive(i == index);
+
+            bool on = i == index;
+            ColorBlock c = tabButtons[i].colors;
+            c.normalColor = on ? Accent : ButtonNormal;
+            c.selectedColor = c.normalColor;
+            c.highlightedColor = on ? Accent : ButtonHover;
+            tabButtons[i].colors = c;
+            tabLabels[i].color = on ? new Color(0.1f, 0.08f, 0.05f) : Warm;
+        }
+
+        if (index == 1) RefreshClues();
+        if (index == 2) RefreshContacts();
+    }
+
+    private static void ClearChildren(RectTransform parent)
+    {
+        for (int i = parent.childCount - 1; i >= 0; i--)
+        {
+            GameObject g = parent.GetChild(i).gameObject;
+            g.SetActive(false);
+            Destroy(g);
+        }
+    }
+
+    private void RefreshClues()
+    {
+        ClearChildren(cluesContent);
+
+        if (GameState.Clues.Count == 0)
+        {
+            AddClueRow("-", "No clues yet. Look around the rooms.", true);
+            return;
+        }
+
+        for (int i = 0; i < GameState.Clues.Count; i++)
+            AddClueRow((i + 1).ToString(), GameState.Clues[i], false);
+    }
+
+    private void AddClueRow(string number, string text, bool dim)
+    {
+        GameObject row = new GameObject("Clue", typeof(RectTransform));
+        row.transform.SetParent(cluesContent, false);
+        Image bg = row.AddComponent<Image>();
+        bg.color = PhoneUI.BoxFill;
+        bg.raycastTarget = false;
+
+        bool ar = PhoneUI.HasArabic(text);
+        TMP_Text body = PhoneUI.Txt(row.transform, font, "Text", 26, ar ? TextAlignmentOptions.TopRight : TextAlignmentOptions.TopLeft, dim ? Dim : Warm, text);
+        float h = Mathf.Max(60f, body.GetPreferredValues(860f, 0f).y + 28f);
+        row.AddComponent<LayoutElement>().preferredHeight = h;
+
+        RectTransform br = body.rectTransform;
+        br.anchorMin = Vector2.zero;
+        br.anchorMax = Vector2.one;
+        br.offsetMin = new Vector2(70f, 14f);
+        br.offsetMax = new Vector2(-20f, -14f);
+
+        TMP_Text n = PhoneUI.Txt(row.transform, font, "Number", 28, TextAlignmentOptions.TopLeft, Accent, number);
+        PhoneUI.Place(n, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(22f, -14f), new Vector2(44f, 36f));
+    }
+
+    private void RefreshContacts()
+    {
+        ClearChildren(contactsContent);
+        chat.Clear();
+
+        var contacts = new System.Collections.Generic.List<string>();
+        foreach (GameState.ChatMessage m in GameState.Messages)
+            if (!contacts.Contains(m.Contact)) contacts.Add(m.Contact);
+
+        if (contacts.Count == 0)
+        {
+            selectedContact = null;
+            AddContactRow(null, "No messages yet.", "");
+            return;
+        }
+
+        if (selectedContact == null || !contacts.Contains(selectedContact)) selectedContact = contacts[0];
+
+        foreach (string contact in contacts)
+        {
+            string last = "";
+            foreach (GameState.ChatMessage m in GameState.Messages) if (m.Contact == contact) last = m.Text;
+            AddContactRow(contact, contact, last);
+        }
+
+        foreach (GameState.ChatMessage m in GameState.Messages)
+            if (m.Contact == selectedContact) chat.AddBubble(m.Text, m.FromPlayer);
+    }
+
+    private void AddContactRow(string contact, string name, string preview)
+    {
+        GameObject row = new GameObject("Contact", typeof(RectTransform));
+        row.transform.SetParent(contactsContent, false);
+        row.AddComponent<LayoutElement>().preferredHeight = 78f;
+
+        Image bg = row.AddComponent<Image>();
+        bg.color = Color.white;
+        bool selected = contact != null && contact == selectedContact;
+
+        TMP_Text title = PhoneUI.Txt(row.transform, font, "Name", 26, TextAlignmentOptions.Left, selected ? new Color(0.1f, 0.08f, 0.05f) : Warm, name);
+        PhoneUI.Place(title, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(16f, -8f), new Vector2(250f, 34f));
+
+        if (!string.IsNullOrEmpty(preview))
+        {
+            if (preview.Length > 20) preview = preview.Substring(0, 20) + "...";
+            TMP_Text p = PhoneUI.Txt(row.transform, font, "Preview", 19, PhoneUI.HasArabic(preview) ? TextAlignmentOptions.Right : TextAlignmentOptions.Left,
+                                     selected ? new Color(0.25f, 0.19f, 0.1f) : Dim, preview);
+            p.textWrappingMode = TextWrappingModes.NoWrap;
+            PhoneUI.Place(p, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(16f, -44f), new Vector2(250f, 26f));
+        }
+
+        if (contact == null) return;
+
+        Button button = row.AddComponent<Button>();
+        button.targetGraphic = bg;
+        ColorBlock colors = button.colors;
+        colors.normalColor = selected ? Accent : ButtonNormal;
+        colors.selectedColor = colors.normalColor;
+        colors.highlightedColor = selected ? Accent : ButtonHover;
+        colors.pressedColor = Accent;
+        colors.fadeDuration = 0.08f;
+        button.colors = colors;
+        button.onClick.AddListener(() => { Sfx.Play(SfxKind.Tab); selectedContact = contact; RefreshContacts(); });
     }
 
     // ------------------------------------------------------------ runtime --
@@ -126,7 +331,8 @@ public class PauseMenu : MonoBehaviour
 
     private static bool CanToggle()
     {
-        // Not while the screen is fading between rooms.
+        // Not during the opening phone scene, while a paper is being read, or while the screen is fading.
+        if (PhoneUI.Busy || DocumentViewer.IsOpen || Time.frameCount == DocumentViewer.ClosedFrame) return false;
         return !(GameSystems.HasInstance && GameSystems.Instance.Fader != null && GameSystems.Instance.Fader.IsBusy);
     }
 
@@ -142,6 +348,7 @@ public class PauseMenu : MonoBehaviour
         if (playerController != null) playerController.enabled = false;   // no walking, no looking
 
         overlay.SetActive(true);
+        SetTab(0);
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
     }
@@ -187,7 +394,7 @@ public class PauseMenu : MonoBehaviour
     // The Starter Assets first person controller is switched off while paused (it owns movement,
     // gravity and camera look), and its remembered look / move values are cleared on resume so the
     // camera does not keep turning from a stale mouse value.
-    private static MonoBehaviour FindPlayerController()
+    internal static MonoBehaviour FindPlayerController()
     {
         CharacterController cc = FindFirstObjectByType<CharacterController>();
         if (cc == null) return null;
@@ -198,7 +405,7 @@ public class PauseMenu : MonoBehaviour
         return null;
     }
 
-    private static void ClearStaleInput()
+    internal static void ClearStaleInput()
     {
         CharacterController cc = FindFirstObjectByType<CharacterController>();
         if (cc == null) return;
@@ -219,7 +426,8 @@ public class PauseMenu : MonoBehaviour
 
     // -------------------------------------------------------------- utils --
 
-    private void NewButton(Transform parent, string label, float y, UnityEngine.Events.UnityAction onClick)
+    private Button NewButton(Transform parent, string label, float y, UnityEngine.Events.UnityAction onClick,
+                             Vector2 xOffset, Vector2 size, float fontSize, out TMP_Text text)
     {
         GameObject go = new GameObject(label + "Button", typeof(RectTransform));
         go.transform.SetParent(parent, false);
@@ -239,11 +447,12 @@ public class PauseMenu : MonoBehaviour
         button.colors = colors;
         button.onClick.AddListener(onClick);
 
-        Place((RectTransform)go.transform, new Vector2(0.5f, 1f), new Vector2(0f, y), new Vector2(360f, 56f));
+        Place((RectTransform)go.transform, new Vector2(0.5f, 1f), new Vector2(xOffset.x, y), size);
 
-        TMP_Text text = NewText("Label", go.transform, 26, TextAlignmentOptions.Center);
+        text = NewText("Label", go.transform, fontSize, TextAlignmentOptions.Center);
         Fill(text.rectTransform);
         text.text = label;
+        return button;
     }
 
     private static Image NewImage(string name, Transform parent, Color color)

@@ -76,7 +76,7 @@ public class PlayerInteraction : MonoBehaviour
 
     private void Update()
     {
-        if (PauseMenu.IsPaused || IsTransitioning)
+        if (PauseMenu.IsPaused || IsTransitioning || DocumentViewer.IsOpen || PhoneUI.Busy || Time.frameCount == DocumentViewer.ClosedFrame)
         {
             CancelHold();
             current = null;
@@ -113,6 +113,7 @@ public class PlayerInteraction : MonoBehaviour
         if (GameInput.InteractPressed)
         {
             current.Interact(this);
+            Sfx.ForInteractable(current);
 
             // The interaction may have changed what is there (item taken, door toggled, item picked up).
             current = Scan();
@@ -152,6 +153,7 @@ public class PlayerInteraction : MonoBehaviour
             SetHoldBar(0f);
 
             finished.Interact(this);
+            Sfx.ForInteractable(finished);
 
             current = Scan();
             ShowPrompt(current != null ? current.Prompt : null, current != null ? current.KeyHint : null);

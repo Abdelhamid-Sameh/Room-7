@@ -89,6 +89,24 @@ public static class GameState
         return true;
     }
 
+    // --- phone messages ---------------------------------------------------
+    public struct ChatMessage { public string Contact; public string Text; public bool FromPlayer; }
+
+    /// <summary>Every text message, oldest first. The pause-menu Messages tab reads this.</summary>
+    public static readonly List<ChatMessage> Messages = new List<ChatMessage>();
+
+    /// <summary>The opening conversation with the Manager has played.</summary>
+    public static bool IntroDone;
+
+    /// <summary>Nabil has texted Malak - her contact only exists from then on.</summary>
+    public static bool MalakContacted;
+
+    public static void AddMessage(string contact, string text, bool fromPlayer)
+    {
+        Messages.Add(new ChatMessage { Contact = contact, Text = text, FromPlayer = fromPlayer });
+        RaiseChanged();
+    }
+
     // --- locker doors (so they stay open / closed across scene loads) -----
     public static bool NabilLockerOpen;
     public static bool MalakLockerOpen;
@@ -126,6 +144,9 @@ public static class GameState
 
         MalakUniformInspected = false;
         Clues.Clear();
+        Messages.Clear();
+        IntroDone = false;
+        MalakContacted = false;
 
         NabilLockerOpen = false;
         MalakLockerOpen = false;

@@ -33,6 +33,9 @@ public class HUDController : MonoBehaviour
 
     private TMP_FontAsset font;
 
+    /// <summary>The HUD's font (Cairo SDF), shared by other UI such as the paper reader.</summary>
+    public TMP_FontAsset Font => font;
+
     private Image crosshair;
     private float crosshairTarget = 1f;
 
