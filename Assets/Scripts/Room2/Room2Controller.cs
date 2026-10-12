@@ -15,7 +15,7 @@ public class Room2Controller : MonoBehaviour
         CinemachineBrain brain = cam != null ? cam.GetComponent<CinemachineBrain>() : null;
         if (brain != null) brain.DefaultBlend = new CinemachineBlendDefinition(CinemachineBlendDefinition.Styles.EaseInOut, 0.9f);
 
-        if (!GameState.R2Done && GameState.R2Loops == 1 && !GameState.PowerOut) StartCoroutine(Blackout());
+        if (!GameState.R2Done && GameState.R2Loops == 1 && !GameState.PowerOut && GameState.HasFlashlight) StartCoroutine(Blackout());
     }
 
     private IEnumerator Blackout()

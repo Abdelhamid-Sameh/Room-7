@@ -125,6 +125,7 @@ public static class GameState
     public static void CountLoop()
     {
         if (R2Done || R2Loops >= 2) return;
+        if (R2Loops == 1 && !PowerOut) return;   // the blackout has to have happened (it needs the flashlight) before the loop can go on
         R2Loops++;
         if (R2Loops >= 2) PowerOut = true;   // the blackout is on whether or not he waited for it
         RaiseChanged();

@@ -87,7 +87,7 @@ public class PickupItem : Interactable, ICarryable
                 case PickupKind.Radio: return GameState.HasRadio;
                 case PickupKind.WearUniform: return GameState.UniformTaken;
                 case PickupKind.Flashlight: return GameState.HasFlashlight;
-                case PickupKind.Fuse: return GameState.HasFuse;
+                case PickupKind.Fuse: return GameState.HasFuse || GameState.R2Done;
                 default: return false;   // clues stay interactable (toggle hold/put-down)
             }
         }
@@ -98,7 +98,7 @@ public class PickupItem : Interactable, ICarryable
         // Back from another scene: anything already taken must stay taken.
         // Room 2 props only exist once the loop that reveals them has been walked.
         if (kind == PickupKind.Flashlight && GameState.R2Loops < 1) { gameObject.SetActive(false); return; }
-        if (kind == PickupKind.Fuse && GameState.R2Loops < 2) { gameObject.SetActive(false); return; }
+        if (kind == PickupKind.Fuse && (GameState.R2Loops < 2 || GameState.R2Done)) { gameObject.SetActive(false); return; }
 
         if (kind == PickupKind.InspectMalakUniform || !AlreadyHandled) return;
 
