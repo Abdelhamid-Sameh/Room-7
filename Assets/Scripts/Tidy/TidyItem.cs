@@ -267,6 +267,7 @@ public class TidyItem : Interactable
 
     public override void OnHold(float progress)
     {
+        if (mode == TidyMode.Hold) Sfx.SetWipe(progress > 0f && progress < 1f);
         for (int i = 0; i < fadeMaterials.Length; i++)
         {
             if (!fadeMaterials[i].HasProperty("_BaseColor")) continue;
@@ -346,6 +347,7 @@ public class TidyItem : Interactable
 
     private void FinishHold()
     {
+        Sfx.SetWipe(false);
         if (fadeOnHold != null)
             foreach (Renderer r in fadeOnHold) if (r != null) r.enabled = false;
         MarkTidy();
