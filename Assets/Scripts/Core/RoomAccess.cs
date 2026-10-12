@@ -11,10 +11,13 @@ public static class RoomAccess
         switch (scene)
         {
             case "StaffRoom":
-                return true;                       // the first stop of the shift
+                return !GameState.PowerOut;        // the first stop of the shift (locked during the blackout)
 
             case "Room01":
-                return GameState.HasAllThings;     // 'Clean room 1' starts once the three things are collected
+                return GameState.HasAllThings && !GameState.PowerOut;   // 'Clean room 1' starts once the three things are collected
+
+            case "Room02":
+                return GameState.HasAllThings;     // the looping corridor - the only door that opens in the blackout
 
             default:
                 return false;                      // every other room is locked for now

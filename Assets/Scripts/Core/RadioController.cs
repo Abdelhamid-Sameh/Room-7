@@ -31,14 +31,31 @@ public class RadioController : MonoBehaviour
     public int TrackCount => playlist != null ? playlist.Count : 0;
     public bool HasAudio => TrackCount > 0;
 
+    private bool Unlocked(int i) { return playlist != null && playlist.IsUnlocked(i); }
+
+    public int UnlockedCount
+    {
+        get { int n = 0; for (int i = 0; i < TrackCount; i++) if (Unlocked(i)) n++; return n; }
+    }
+
+    // Next / previous track that is not still locked (wraps around).
+    private int Step(int dir)
+    {
+        int c = Mathf.Max(1, TrackCount), i = CurrentIndex;
+        for (int k = 0; k < c; k++) { i = (i + dir + c) % c; if (Unlocked(i)) return i; }
+        return CurrentIndex;
+    }
+
     private int CurrentIndex => Mathf.Clamp(GameState.RadioTrackIndex, 0, Mathf.Max(0, TrackCount - 1));
 
     public string TrackName => HasAudio ? playlist.NameAt(CurrentIndex) : "No tape loaded";
 
-    public string TrackPosition => HasAudio ? $"{CurrentIndex + 1} / {TrackCount}" : "";
+    public string TrackPosition => HasAudio ? $"{PositionAmongUnlocked()} / {UnlockedCount}" : "";
 
     /// <summary>True while the radio is paused part-way through a track (R carries on from there).</summary>
     public bool IsPaused => isPaused;
+
+    private int PositionAmongUnlocked() { int n = 0; for (int i = 0; i <= CurrentIndex; i++) if (Unlocked(i)) n++; return Mathf.Max(1, n); }
 
     /// <summary>Seconds played of the current track. Kept while paused, 0 for a track not started yet.</summary>
     public float Elapsed => source != null && source.clip != null ? source.time : 0f;
@@ -70,7 +87,7 @@ public class RadioController : MonoBehaviour
 
         source.playOnAwake = false;
         source.spatialBlend = 0f;   // UI-style 2D sound, not positional
-        source.loop = TrackCount <= 1;
+        source.loop = UnlockedCount <= 1;
         ApplyVolume();
     }
 
@@ -126,7 +143,7 @@ public class RadioController : MonoBehaviour
         wasPlaying = false;
 
         bool endedNaturally = lastTime >= source.clip.length - 1.5f;
-        if (endedNaturally && TrackCount > 1) NextTrack();
+        if (endedNaturally && UnlockedCount > 1) NextTrack();
         else Apply();
     }
 
@@ -148,7 +165,7 @@ public class RadioController : MonoBehaviour
     public void NextTrack()
     {
         int count = Mathf.Max(1, TrackCount);
-        GameState.RadioTrackIndex = (CurrentIndex + 1) % count;
+        GameState.RadioTrackIndex = Step(1);
         Apply();
         GameState.RaiseChanged();
     }
@@ -157,7 +174,7 @@ public class RadioController : MonoBehaviour
     public void PreviousTrack()
     {
         int count = Mathf.Max(1, TrackCount);
-        GameState.RadioTrackIndex = (CurrentIndex - 1 + count) % count;
+        GameState.RadioTrackIndex = Step(-1);
         Apply();
         GameState.RaiseChanged();
     }
@@ -167,7 +184,7 @@ public class RadioController : MonoBehaviour
     {
         if (source == null) return;
 
-        source.loop = TrackCount <= 1;
+        source.loop = UnlockedCount <= 1;
 
         AudioClip wanted = HasAudio ? playlist.ClipAt(CurrentIndex) : null;
         if (wanted == null)

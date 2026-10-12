@@ -107,6 +107,29 @@ public static class GameState
         RaiseChanged();
     }
 
+    // --- room 2: the looping corridor ---------------------------------------
+    /// <summary>How many times Nabil has left Room 2 through the FRONT door (0-2). Leaving by the door he came in through does not count.</summary>
+    public static int R2Loops;
+    public static bool HasFlashlight, FlashlightOn, HasFuse;
+    /// <summary>The fuse is in: the power is back and Room 2 is finished for good.</summary>
+    public static bool R2Done;
+    public static bool R2SideOpen;      // the door into the electricity room has been opened
+    public static bool R2Replied;       // Malak has answered, after the last exit
+    /// <summary>The whole floor is without power: dark corridor, no street noise, every room but Room 2 locked.</summary>
+    public static bool PowerOut;
+
+    /// <summary>Radio tracks earned so far (playlist 'unlockKey').</summary>
+    public static readonly HashSet<string> UnlockedTracks = new HashSet<string>();
+    public static bool IsTrackUnlocked(string key) { return string.IsNullOrEmpty(key) || UnlockedTracks.Contains(key); }
+
+    public static void CountLoop()
+    {
+        if (R2Done || R2Loops >= 2) return;
+        R2Loops++;
+        if (R2Loops >= 2) PowerOut = true;   // the blackout is on whether or not he waited for it
+        RaiseChanged();
+    }
+
     // --- locker doors (so they stay open / closed across scene loads) -----
     public static bool NabilLockerOpen;
     public static bool MalakLockerOpen;
@@ -150,6 +173,11 @@ public static class GameState
 
         NabilLockerOpen = false;
         MalakLockerOpen = false;
+
+        R2Loops = 0;
+        HasFlashlight = false; FlashlightOn = false; HasFuse = false;
+        R2Done = false; R2SideOpen = false; R2Replied = false; PowerOut = false;
+        UnlockedTracks.Clear();
 
         RadioTrackIndex = 0;
         RadioPlaying = false;

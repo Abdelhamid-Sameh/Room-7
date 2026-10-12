@@ -19,9 +19,22 @@ public class PhoneUI : MonoBehaviour
 
     /// <summary>True while the intro owns the player (no walking, no pausing, no interacting).</summary>
     public static bool Busy { get; private set; }
+    public static PhoneUI Instance { get; private set; }
+
+    /// <summary>A short top-right note ("Flashlight - press F ..."). Does nothing before the UI exists.</summary>
+    public static void Hint(string title, string line)
+    {
+        if (Instance != null) Instance.StartCoroutine(Instance.Toast(title, line, 3.2f));
+    }
+
+    /// <summary>Room 2: the lights go out and Nabil checks on Malak.</summary>
+    public static void TextMalakLightsOut()
+    {
+        if (Instance != null) Instance.StartCoroutine(Instance.NabilChecksOnMalak());
+    }
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-    private static void ResetStatics() { Busy = false; rounded = null; circle = null; }
+    private static void ResetStatics() { Busy = false; Instance = null; rounded = null; circle = null; }
 
     public static readonly Color Warm = new Color(0.95f, 0.91f, 0.82f);
     public static readonly Color Dim = new Color(0.55f, 0.53f, 0.47f);
@@ -188,6 +201,7 @@ public class PhoneUI : MonoBehaviour
         scaler.matchWidthOrHeight = 0.5f;
         root = go.transform;
 
+        Instance = this;
         SceneManager.sceneLoaded += OnSceneLoaded;
 
         // The game starts in the corridor; later sessions skip the intro.
@@ -201,6 +215,7 @@ public class PhoneUI : MonoBehaviour
     private void OnDestroy()
     {
         SceneManager.sceneLoaded -= OnSceneLoaded;
+        if (Instance == this) Instance = null;
         Busy = false;
     }
 
@@ -209,6 +224,10 @@ public class PhoneUI : MonoBehaviour
         // Back in the corridor after the staff room: Nabil texts Malak.
         if (scene.name == CorridorScene && GameState.HasVisited(StaffScene) && !GameState.MalakContacted)
             StartCoroutine(TextMalak());
+
+        // Room 2 is finished and Nabil is back in the corridor: Malak answers.
+        if (scene.name == CorridorScene && GameState.R2Done && !GameState.R2Replied)
+            StartCoroutine(MalakReplies());
     }
 
     // --------------------------------------------------------------- intro --
@@ -393,18 +412,50 @@ public class PhoneUI : MonoBehaviour
         yield return Toast("Message sent to Malak", "ملك، إنتي فين؟");
     }
 
-    private IEnumerator Toast(string title, string line)
+    private IEnumerator NabilChecksOnMalak()
+    {
+        yield return Wait(1.5f);
+        GameState.MalakContacted = true;
+        const string line = "ملك إنتى كويسة ؟؟";
+        GameState.AddMessage("Malak", line, true);
+        Sfx.Play(SfxKind.Send);
+        yield return Toast("Message sent to Malak", line, 3f);
+    }
+
+    private IEnumerator MalakReplies()
+    {
+        yield return Wait(2.5f);
+        if (GameState.R2Replied) yield break;
+        GameState.R2Replied = true;
+
+        yield return Say(false, "أنا كويسة الحمد لله");
+        yield return Say(false, "كنت تعبانه بس فا ما سلمتكش الشيفت");
+        yield return Say(false, "روحت بدرى");
+        yield return Say(true, "طب الحمد لله");
+        yield return Say(true, "هو مستر أشرف مش ناوى يشوف موضوع الكهربا ده بقى !");
+        yield return Say(false, "بنى أدم جلدة يخرب بيته");
+    }
+
+    private IEnumerator Say(bool fromNabil, string text)
+    {
+        yield return Wait(1.3f);
+        GameState.AddMessage("Malak", text, fromNabil);
+        Sfx.Play(fromNabil ? SfxKind.Send : SfxKind.Ping);
+        yield return Toast(fromNabil ? "Message sent to Malak" : "Malak", text, 2.4f);
+    }
+
+    private IEnumerator Toast(string title, string line, float hold = 3.5f)
     {
         Image card = Img("Toast", root, CardBg);
-        Place(card, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-40f, -40f), new Vector2(420f, 96f));
-        Place(Img("LeftEdge", card.transform, Accent), new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), Vector2.zero, new Vector2(4f, 96f));
+        Place(card, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-40f, -40f), new Vector2(560f, 112f));
+        Place(Img("LeftEdge", card.transform, Accent), new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), Vector2.zero, new Vector2(4f, 112f));
         CanvasGroup group = card.gameObject.AddComponent<CanvasGroup>();
-        Place(Txt(card.transform, font, "Title", 22, TextAlignmentOptions.Left, Accent, title), new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(24f, -12f), new Vector2(380f, 30f));
-        Place(Txt(card.transform, font, "Line", 26, HasArabic(line) ? TextAlignmentOptions.Right : TextAlignmentOptions.Left, Warm, line), new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(24f, -46f), new Vector2(380f, 36f));
+        Place(Txt(card.transform, font, "Title", 22, TextAlignmentOptions.Left, Accent, title), new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(24f, -12f), new Vector2(520f, 30f));
+        Place(Txt(card.transform, font, "Line", line.Length > 34 ? 20 : 26, HasArabic(line) ? TextAlignmentOptions.Right : TextAlignmentOptions.Left, Warm, line), new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(24f, -46f), new Vector2(520f, 56f));
 
         for (float t = 0f; t < 0.4f; t += Time.unscaledDeltaTime) { group.alpha = t / 0.4f; yield return null; }
         group.alpha = 1f;
-        yield return Wait(3.5f);
+        yield return Wait(hold);
         for (float t = 0f; t < 0.8f; t += Time.unscaledDeltaTime) { group.alpha = 1f - t / 0.8f; yield return null; }
         Destroy(card.gameObject);
     }

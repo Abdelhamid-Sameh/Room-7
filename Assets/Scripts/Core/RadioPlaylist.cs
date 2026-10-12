@@ -19,11 +19,19 @@ public class RadioPlaylist : ScriptableObject
 
         [Tooltip("What the radio shows. Leave empty to use the audio file's name.")]
         public string displayName;
+
+        [Tooltip("Empty = always available. Otherwise the track stays locked until GameState.UnlockedTracks has this key (e.g. Room02).")]
+        public string unlockKey;
     }
 
     [SerializeField] private Entry[] tracks = new Entry[0];
 
     public int Count => tracks != null ? tracks.Length : 0;
+
+    public bool IsUnlocked(int index)
+    {
+        return index >= 0 && index < Count && GameState.IsTrackUnlocked(tracks[index].unlockKey);
+    }
 
     public AudioClip ClipAt(int index)
     {

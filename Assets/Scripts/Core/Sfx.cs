@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-public enum SfxKind { Click, Tidy, Paper, Pickup, Switch, LockerOpen, LockerClose, SwitchOff, Wipe, Ping, Send, Tab }
+public enum SfxKind { Click, Tidy, Paper, Pickup, Switch, LockerOpen, LockerClose, SwitchOff, Wipe, Ping, Send, Tab, PowerDown, Fuse, PowerOn, Door }
 
 /// <summary>
 /// Interaction sound effects. A kind plays the recording at Assets/Resources/Sfx/&lt;Name&gt; when one exists
@@ -65,6 +65,9 @@ public static class Sfx
         else if (i is DocumentItem) k = SfxKind.Paper;
         else if (i is PickupItem) k = SfxKind.Pickup;
         else if (i is LightSwitch) k = i.Prompt.Contains("off") ? SfxKind.Switch : SfxKind.SwitchOff;   // prompt says what the NEXT press does
+        else if (i is DoorTransition) k = ((DoorTransition)i).IsLocked ? SfxKind.Click : SfxKind.Door;
+        else if (i is SwingDoor) k = ((SwingDoor)i).Opened ? SfxKind.Door : SfxKind.Click;
+        else if (i is FuseBox) return;   // plays its own sounds
         else if (i is Locker) k = ((Locker)i).IsOpen ? SfxKind.LockerOpen : SfxKind.LockerClose;
         Play(k);
     }
@@ -74,8 +77,20 @@ public static class Sfx
         AudioClip clip;
         if (cache.TryGetValue(kind, out clip)) return clip;
 
-        string file = kind == SfxKind.LockerOpen ? "Locker_Open" : kind == SfxKind.LockerClose ? "Locker_Close" : kind == SfxKind.SwitchOff ? "Switch" : kind.ToString();
-        clip = Resources.Load<AudioClip>("Sfx/" + file);
+        string path;
+        switch (kind)
+        {
+            case SfxKind.PowerDown: path = "Room2/Power_down"; break;
+            case SfxKind.PowerOn:   path = "Room2/Power_on"; break;
+            case SfxKind.Fuse:      path = "Room2/Fuse"; break;
+            case SfxKind.Door:      path = "Room2/Door"; break;
+            case SfxKind.LockerOpen:  path = "Sfx/Locker_Open"; break;
+            case SfxKind.LockerClose: path = "Sfx/Locker_Close"; break;
+            case SfxKind.SwitchOff:   path = "Sfx/Switch"; break;
+            default: path = "Sfx/" + kind; break;
+        }
+
+        clip = Resources.Load<AudioClip>(path);
         if (clip == null) clip = Synth(kind);
         else clip = Trim(kind, clip);
         cache[kind] = clip;
@@ -109,6 +124,7 @@ public static class Sfx
             case SfxKind.Switch:     start = 0.10f; len = 0.20f; break;
             case SfxKind.SwitchOff:  start = 1.40f; len = 0.20f; break;
             case SfxKind.Wipe:       start = 0.15f; len = 0.55f; peak = 0.4f; break;
+            case SfxKind.PowerOn:    start = 5.00f; len = 3.00f; break;   // only 0:05 - 0:08 of the recording
             default: return src;
         }
 

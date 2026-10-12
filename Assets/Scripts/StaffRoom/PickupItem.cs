@@ -16,7 +16,13 @@ public enum PickupKind
     /// Malak's uniform. A clue, not an item - interacting picks it up to the centre of the screen
     /// (see CarrySystem) and interacting again puts it back exactly where it was.
     /// </summary>
-    InspectMalakUniform
+    InspectMalakUniform,
+
+    /// <summary>Room 2: the flashlight left on the corridor floor after the first loop.</summary>
+    Flashlight,
+
+    /// <summary>Room 2: the fuse lying in the dark corridor after the second loop.</summary>
+    Fuse
 }
 
 /// <summary>
@@ -62,6 +68,8 @@ public class PickupItem : Interactable, ICarryable
                 case PickupKind.CleaningKit: return "Take cleaning supplies";
                 case PickupKind.Radio: return "Take radio";
                 case PickupKind.WearUniform: return "Put on uniform";
+                case PickupKind.Flashlight: return "Take flashlight";
+                case PickupKind.Fuse: return "Take fuse";
                 default: return "Take";
             }
         }
@@ -78,6 +86,8 @@ public class PickupItem : Interactable, ICarryable
                 case PickupKind.CleaningKit: return GameState.HasCleaningKit;
                 case PickupKind.Radio: return GameState.HasRadio;
                 case PickupKind.WearUniform: return GameState.UniformTaken;
+                case PickupKind.Flashlight: return GameState.HasFlashlight;
+                case PickupKind.Fuse: return GameState.HasFuse;
                 default: return false;   // clues stay interactable (toggle hold/put-down)
             }
         }
@@ -86,6 +96,10 @@ public class PickupItem : Interactable, ICarryable
     private void Start()
     {
         // Back from another scene: anything already taken must stay taken.
+        // Room 2 props only exist once the loop that reveals them has been walked.
+        if (kind == PickupKind.Flashlight && GameState.R2Loops < 1) { gameObject.SetActive(false); return; }
+        if (kind == PickupKind.Fuse && GameState.R2Loops < 2) { gameObject.SetActive(false); return; }
+
         if (kind == PickupKind.InspectMalakUniform || !AlreadyHandled) return;
 
         if (kind == PickupKind.WearUniform && GameState.UniformWorn && activateOnTaken != null)
@@ -117,6 +131,18 @@ public class PickupItem : Interactable, ICarryable
             case PickupKind.Radio:
                 GameState.HasRadio = true;
                 Disappear();
+                break;
+
+            case PickupKind.Flashlight:
+                GameState.HasFlashlight = true;
+                Disappear();
+                PhoneUI.Hint("Flashlight", "Press F to turn it on and off");
+                break;
+
+            case PickupKind.Fuse:
+                GameState.HasFuse = true;
+                Disappear();
+                PhoneUI.Hint("Fuse", "Find the fusebox");
                 break;
 
             case PickupKind.WearUniform:

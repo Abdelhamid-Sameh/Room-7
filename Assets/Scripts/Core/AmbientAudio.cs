@@ -75,12 +75,14 @@ public class AmbientAudio : MonoBehaviour
     private void OnEnable()
     {
         AudioLevels.Changed += ApplyLevels;
+        GameState.Changed += ApplyLevels;
         ApplyLevels();
     }
 
     private void OnDisable()
     {
         AudioLevels.Changed -= ApplyLevels;
+        GameState.Changed -= ApplyLevels;
     }
 
     private void OnDestroy()
@@ -97,7 +99,7 @@ public class AmbientAudio : MonoBehaviour
     {
         if (source == null) return;
 
-        source.volume = volume * AudioLevels.AmbientVolume;
+        source.volume = GameState.PowerOut ? 0f : volume * AudioLevels.AmbientVolume;   // the street goes quiet in the blackout
 
         if (lowPass != null)
         {
