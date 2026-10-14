@@ -83,11 +83,16 @@ public static class GameState
     {
         if (string.IsNullOrEmpty(text) || Clues.Contains(text)) return false;
 
-        Clues.Add(text);
+        // The safe code reads 21, 08, 02: keep those digit clues in that order however they were found.
+        int rank = DigitClueRank(text);
+        int at = rank < 0 ? -1 : Clues.FindIndex(c => DigitClueRank(c) > rank);
+        if (at >= 0) Clues.Insert(at, text); else Clues.Add(text);
         ClueAdded?.Invoke(text);
         RaiseChanged();
         return true;
     }
+
+    private static int DigitClueRank(string c) { return c.StartsWith("21 - ") ? 0 : c.StartsWith("08 - ") ? 1 : c.StartsWith("02 - ") ? 2 : -1; }
 
     // --- phone messages ---------------------------------------------------
     public struct ChatMessage { public string Contact; public string Text; public bool FromPlayer; }
