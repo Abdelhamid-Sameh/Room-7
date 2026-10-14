@@ -152,7 +152,7 @@ public static class GameState
 
     public static string ArtifactTitle(string id)
     {
-        switch (id) { case "GameBoy": return "red Game Boy"; case "Rock": return "rock"; default: return id; }
+        switch (id) { case "GameBoy": return "Red Game Boy"; case "Rock": return "Rock"; default: return id; }
     }
 
     public static string ArtifactNote(string id)
@@ -160,7 +160,7 @@ public static class GameState
         switch (id)
         {
             case "GameBoy": return "A red retro console. The screen is dark, but the buttons are worn smooth - someone played this a lot.";
-            case "Rock": return "A plain grey rock. Heavier than it looks. Why was it locked away?";
+            case "Rock": return "A rock or حجر in arabic";
             default: return "";
         }
     }

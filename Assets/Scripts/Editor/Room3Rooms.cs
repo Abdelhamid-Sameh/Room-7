@@ -300,7 +300,7 @@ public static partial class Room3Builder
         // the readable copy the viewer shows
         System.IO.File.Copy(tex + "TicketStub.png", "Assets/Resources/Room3/TicketStub.png", true);
         AssetDatabase.ImportAsset("Assets/Resources/Room3/TicketStub.png");
-        Document(ticket, "Ticket stub", "Read the ticket", "Room3/TicketStub", "Room 3: 08, on the ticket stub");
+        Document(ticket, "Ticket stub", "Read the ticket", "Room3/TicketStub", "Room 3: 02, on the ticket stub");
 
         GameObject pizza = RoomKit.Box("C_PizzaBox", tidyGroup, new Vector3(6.85f, 0.78f, 0.45f), new Vector3(0.42f, 0.05f, 0.42f), Mat("R3_Pizza", new Color(0.78f, 0.62f, 0.4f), 0.2f));
         RoomKit.Box("Logo", pizza.transform, pizza.transform.position + Vector3.up * 0.026f, new Vector3(0.3f, 0.005f, 0.3f), Mat("R3_PizzaRed", new Color(0.7f, 0.12f, 0.08f), 0.2f), false).transform.SetParent(pizza.transform, true);
@@ -370,7 +370,7 @@ public static partial class Room3Builder
         Float(RoomKit.Prefab(GG + "Decoration_Light_TableLamp_01_02.prefab", props, new Vector3(3.9f, 1.0f, 2.2f), 0f, 1f, "D_Lamp_Float"), 25f);
 
         // the key tag with the last two digits
-        string tagPath = DigitTex(tex + "KeyTag.png", "02", new Color(0.1f, 0.08f, 0.05f), new Color(0.82f, 0.66f, 0.22f), 10);
+        string tagPath = DigitTex(tex + "KeyTag.png", "08", new Color(0.1f, 0.08f, 0.05f), new Color(0.82f, 0.66f, 0.22f), 10);
         System.IO.File.Copy(tagPath, "Assets/Resources/Room3/KeyTag.png", true);
         AssetDatabase.ImportAsset("Assets/Resources/Room3/KeyTag.png");
         Material tagMat = RoomKit.Tiled("R3_KeyTag", tagPath, Color.white, 1f, 1f, 1f, 0.5f);
@@ -382,7 +382,7 @@ public static partial class Room3Builder
         RoomKit.Quad("Front", tt, tt.position + new Vector3(0f, 0f, -0.007f), Quaternion.identity, new Vector2(0.19f, 0.11f), tagMat);
         RoomKit.Quad("Back", tt, tt.position + new Vector3(0f, 0f, 0.007f), Quaternion.Euler(0f, 180f, 0f), new Vector2(0.19f, 0.11f), tagMat);
         RoomKit.FitCollider(tag);
-        Document(tag, "Key tag", "Look at the key tag", "Room3/KeyTag", "Room 3: 02, on the floating key tag");
+        Document(tag, "Key tag", "Look at the key tag", "Room3/KeyTag", "Room 3: 08, on the floating key tag");
         Float(tag, 30f);
 
         // camera roll + lamp colour while inside

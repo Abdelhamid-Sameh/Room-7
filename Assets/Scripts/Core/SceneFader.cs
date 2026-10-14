@@ -20,9 +20,13 @@ public class SceneFader : MonoBehaviour
 
     public bool IsBusy => busy;
 
-    public void Setup(CanvasGroup canvasGroup, float fadeDuration)
+    private CanvasGroup loadingText;
+    private const float MinBlack = 0.9f;   // seconds the loading screen stays up, so a quick load never flashes
+
+    public void Setup(CanvasGroup canvasGroup, float fadeDuration, CanvasGroup loading = null)
     {
         group = canvasGroup;
+        loadingText = loading;
         duration = Mathf.Max(0.01f, fadeDuration);
     }
 
@@ -76,14 +80,15 @@ public class SceneFader : MonoBehaviour
                 yield break;
             }
 
-            // Don't let the new scene's Start() run while we're still black-
-            // screened and before we're ready to reveal it.
             op.allowSceneActivation = true;
-            while (!op.isDone) yield return null;
+            float held = 0f;
+            while (!op.isDone) { held += Time.unscaledDeltaTime; yield return null; }
 
-            // One extra frame lets Awake/Start (and PlayerSpawner) finish
-            // settling into the new scene before we reveal it.
-            yield return null;
+            // Stay black until the new scene is really ready: a player camera exists, the spawn point has
+            // been applied and a few frames have passed (this is what hid the stray corridor frame).
+            for (int i = 0; i < 5; i++) { held += Time.unscaledDeltaTime; yield return null; }
+            while (Camera.main == null && held < 5f) { held += Time.unscaledDeltaTime; yield return null; }
+            while (held < MinBlack) { held += Time.unscaledDeltaTime; yield return null; }
 
             yield return Fade(1f, 0f);
         }
@@ -104,9 +109,11 @@ public class SceneFader : MonoBehaviour
         {
             t += Time.deltaTime;
             group.alpha = Mathf.Lerp(from, to, t / duration);
+            if (loadingText != null) loadingText.alpha = Mathf.Clamp01((group.alpha - 0.6f) * 2.5f);
             yield return null;
         }
 
         group.alpha = to;
+        if (loadingText != null) loadingText.alpha = Mathf.Clamp01((to - 0.6f) * 2.5f);
     }
 }

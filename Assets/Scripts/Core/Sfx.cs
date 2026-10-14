@@ -121,6 +121,15 @@ public static class Sfx
 
     // Some recordings hold several takes (locker open has a latch click and the swing, the switch has on AND off).
     // kind -> start seconds, length seconds, loudness the slice is scaled to (0 = leave as recorded).
+    private static float LeadingSilence(AudioClip src)
+    {
+        float[] d = new float[src.samples * src.channels];
+        src.GetData(d, 0);
+        for (int i = 0; i < d.Length; i++)
+            if (Mathf.Abs(d[i]) > 0.02f) return Mathf.Max(0f, (i / src.channels) / (float)src.frequency - 0.005f);
+        return 0f;
+    }
+
     private static AudioClip Trim(SfxKind kind, AudioClip src)
     {
         float start, len, peak = 0f;
@@ -131,6 +140,7 @@ public static class Sfx
             case SfxKind.SwitchOff:  start = 1.40f; len = 0.20f; break;
             case SfxKind.Wipe:       start = 0.15f; len = 0.55f; peak = 0.4f; break;
             case SfxKind.PowerOn:    start = 5.00f; len = 3.00f; break;   // only 0:05 - 0:08 of the recording
+            case SfxKind.Keypad:     start = LeadingSilence(src); len = 0.5f; break;
             case SfxKind.SafeOpen:   start = 4.00f; len = 1.00f; break;   // 0:04 - 0:05
             case SfxKind.SafeClose:  start = 9.00f; len = 1.00f; break;   // 0:09 - 0:10
             default: return src;

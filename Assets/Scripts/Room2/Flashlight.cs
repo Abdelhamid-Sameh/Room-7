@@ -22,7 +22,7 @@ public class Flashlight : MonoBehaviour
         if (kb != null && kb.fKey.wasPressedThisFrame && !PauseMenu.IsPaused && !PhoneUI.Busy)
         {
             GameState.FlashlightOn = !GameState.FlashlightOn;
-            Sfx.Play(SfxKind.Click);
+            Sfx.Play(GameState.FlashlightOn ? SfxKind.Switch : SfxKind.SwitchOff);   // same sounds as the wall light switch
         }
 
         beam.enabled = GameState.FlashlightOn;

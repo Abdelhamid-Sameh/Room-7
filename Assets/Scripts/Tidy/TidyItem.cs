@@ -48,6 +48,9 @@ public class TidyItem : Interactable
     [Tooltip("Renderers (smudges, dust) that fade away while the player holds the button.")]
     [SerializeField] private Renderer[] fadeOnHold;
 
+    [Tooltip("Renderers (a number under the dust) that stay hidden until the player wipes - they appear as the smudges fade.")]
+    [SerializeField] private Renderer[] revealOnHold;
+
     [Header("Soft body (optional) - e.g. a blanket")]
     [Tooltip("A SkinnedMeshRenderer with a blend shape that holds the crumpled, untidy shape. 100 = untidy, 0 = tidy. Put this item's pose offset to zero if the shape does all the work.")]
     [SerializeField] private SkinnedMeshRenderer softBody;
@@ -92,6 +95,19 @@ public class TidyItem : Interactable
 
     private Material[] fadeMaterials = new Material[0];
     private float[] fadeBaseAlpha = new float[0];
+    private Material[] revealMaterials = new Material[0];
+    private float[] revealBaseAlpha = new float[0];
+
+    private void SetReveal(float p)
+    {
+        for (int i = 0; i < revealMaterials.Length; i++)
+        {
+            if (!revealMaterials[i].HasProperty("_BaseColor")) continue;
+            Color c = revealMaterials[i].GetColor("_BaseColor");
+            c.a = revealBaseAlpha[i] * p;
+            revealMaterials[i].SetColor("_BaseColor", c);
+        }
+    }
 
     private SpriteRenderer marker;
     private PlayerInteraction viewer;
@@ -164,6 +180,22 @@ public class TidyItem : Interactable
 
     private void SetupFade()
     {
+        if (revealOnHold != null)
+        {
+            var rm = new List<Material>();
+            var ra = new List<float>();
+            foreach (Renderer r in revealOnHold)
+            {
+                if (r == null) continue;
+                Material m = r.material;
+                rm.Add(m);
+                ra.Add(m.HasProperty("_BaseColor") ? m.GetColor("_BaseColor").a : 1f);
+            }
+            revealMaterials = rm.ToArray();
+            revealBaseAlpha = ra.ToArray();
+            SetReveal(0f);
+        }
+
         if (fadeOnHold == null) return;
 
         var mats = new List<Material>();
@@ -272,6 +304,7 @@ public class TidyItem : Interactable
     public override void OnHold(float progress)
     {
         if (mode == TidyMode.Hold) Sfx.SetWipe(progress > 0f && progress < 1f);
+        SetReveal(progress);
         for (int i = 0; i < fadeMaterials.Length; i++)
         {
             if (!fadeMaterials[i].HasProperty("_BaseColor")) continue;
@@ -286,9 +319,18 @@ public class TidyItem : Interactable
         OnHold(0f);   // the smudge comes back if the player stops wiping
     }
 
+    // Solid things that move would shove the player around - switch their colliders off for the trip.
+    private Collider[] bodies;
+    private void SetColliders(bool on)
+    {
+        if (bodies == null) bodies = GetComponentsInChildren<Collider>(true);
+        foreach (Collider c in bodies) if (c != null) c.enabled = on;
+    }
+
     private IEnumerator RestoreRoutine()
     {
         busy = true;
+        SetColliders(false);
 
         Vector3 p0 = transform.localPosition;
         Quaternion r0 = transform.localRotation;
@@ -316,6 +358,7 @@ public class TidyItem : Interactable
         SetSoft(0f);
         transform.localPosition = p1;
         transform.localRotation = r1;
+        SetColliders(true);
         busy = false;
         MarkTidy();
     }
@@ -323,6 +366,7 @@ public class TidyItem : Interactable
     private IEnumerator DisposeRoutine()
     {
         busy = true;
+        SetColliders(false);
 
         Vector3 p0 = transform.position;
         Vector3 s0 = transform.localScale;
@@ -352,6 +396,7 @@ public class TidyItem : Interactable
     private void FinishHold()
     {
         Sfx.SetWipe(false);
+        SetReveal(1f);
         if (fadeOnHold != null)
             foreach (Renderer r in fadeOnHold) if (r != null) r.enabled = false;
         MarkTidy();
@@ -387,6 +432,7 @@ public class TidyItem : Interactable
                 break;
 
             case TidyMode.Hold:
+                SetReveal(1f);
                 if (fadeOnHold != null)
                     foreach (Renderer r in fadeOnHold) if (r != null) r.enabled = false;
                 break;

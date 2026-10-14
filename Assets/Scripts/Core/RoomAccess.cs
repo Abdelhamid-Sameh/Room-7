@@ -17,10 +17,10 @@ public static class RoomAccess
                 return GameState.HasAllThings && !GameState.PowerOut;   // 'Clean room 1' starts once the three things are collected
 
             case "Room02":
-                return GameState.HasAllThings;     // the looping corridor - the only door that opens in the blackout
+                return GameState.HasAllThings && GameState.IsRoomCleaned("Room01");     // the looping corridor - needs room 1 finished; the only door that opens in the blackout
 
             case "Room03":
-                return GameState.R2Done && !GameState.PowerOut;   // opens once the lights are back
+                return GameState.IsRoomCleaned("Room01") && GameState.R2Done && !GameState.PowerOut;   // opens once the lights are back
 
             default:
                 return false;                      // every other room is locked for now

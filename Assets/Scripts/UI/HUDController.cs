@@ -132,6 +132,18 @@ public class HUDController : MonoBehaviour
         BuildRadio();
         BuildTidy();
         BuildHoldBar();
+        BuildPhoneHint();
+    }
+
+    private GameObject phoneHint;
+
+    // Small 'P  Phone' chip above the radio - opens the Messages tab (see PauseMenu).
+    private void BuildPhoneHint()
+    {
+        RectTransform card = NewCard("PhoneHint", new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-28f, 232f), new Vector2(150f, 48f), null, CardScale);
+        BuildKey(card, "P", "Phone", 16f);
+        phoneHint = card.gameObject;
+        phoneHint.SetActive(false);
     }
 
     private void OnEnable()
@@ -611,6 +623,7 @@ public class HUDController : MonoBehaviour
     {
         RefreshTasks();
         RefreshRadio();
+        if (phoneHint != null) phoneHint.SetActive(GameState.IntroDone);
     }
 
     // ------------------------------------------------------------ refresh --

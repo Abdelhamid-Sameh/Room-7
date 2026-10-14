@@ -107,8 +107,24 @@ public class GameSystems : MonoBehaviour
         canvasGroup.interactable = false;
         canvasGroup.blocksRaycasts = false;
 
+        // 'LOADING' label that fades in with the black screen.
+        GameObject textGO = NewRect("LoadingText", canvasGO.transform);
+        RectTransform tr = (RectTransform)textGO.transform;
+        tr.anchorMin = tr.anchorMax = tr.pivot = new Vector2(0.5f, 0.5f);
+        tr.sizeDelta = new Vector2(700f, 80f);
+        TextMeshProUGUI label = textGO.AddComponent<TextMeshProUGUI>();
+        if (hudFont != null) label.font = hudFont;
+        label.text = "L O A D I N G";
+        label.fontSize = 34f;
+        label.alignment = TextAlignmentOptions.Center;
+        label.color = new Color(0.95f, 0.91f, 0.82f);
+        label.raycastTarget = false;
+        CanvasGroup loadingGroup = textGO.AddComponent<CanvasGroup>();
+        loadingGroup.alpha = 1f;
+        loadingGroup.blocksRaycasts = false;
+
         Fader = canvasGO.AddComponent<SceneFader>();
-        Fader.Setup(canvasGroup, fadeDuration);
+        Fader.Setup(canvasGroup, fadeDuration, loadingGroup);
     }
 
     private void BuildHud()

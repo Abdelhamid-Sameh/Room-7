@@ -13,6 +13,8 @@ public class HingeDoor : Interactable
     [SerializeField] private string doorId = "";
     [SerializeField] private float openAngle = 100f;
     [SerializeField] private float seconds = 0.8f;
+    [Tooltip("0 = swing away from whoever pushes it. +1 / -1 = always swing the same way (use when furniture is in the way on one side).")]
+    [SerializeField] private int fixedSide = 0;
 
     public bool Opened { get; private set; }
 
@@ -49,7 +51,8 @@ public class HingeDoor : Interactable
         else
         {
             // positive angles swing the leaf towards the frame's forward side, so push it to the far side
-            angle = Vector3.Dot(toPlayer, leaf.parent.forward) > 0f ? -openAngle : openAngle;
+            if (fixedSide != 0) angle = Mathf.Sign(fixedSide) * openAngle;
+            else angle = Vector3.Dot(toPlayer, leaf.parent.forward) > 0f ? -openAngle : openAngle;
             StartCoroutine(Swing(0f, angle));
             Opened = true;
             GameState.DoorAngles[doorId] = angle;

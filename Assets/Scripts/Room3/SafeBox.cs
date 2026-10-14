@@ -43,10 +43,12 @@ public class SafeBox : Interactable
         ShowItems();
     }
 
-    private void ShowItems()
+private void ShowItems()
     {
-        gameBoy.SetActive(GameState.R3SafeItem == "GameBoy");
-        rock.SetActive(GameState.R3SafeItem == "Rock");
+        // Closed and unopened: both items already sit inside, so nothing pops in when the door swings.
+        bool fresh = !GameState.R3SafeOpen && !ItemInside;
+        gameBoy.SetActive(GameState.R3SafeItem == "GameBoy" || (fresh && !GameState.R3MainDone));
+        rock.SetActive(GameState.R3SafeItem == "Rock" || (fresh && !GameState.R3EggDone));
     }
 
     public override void Interact(PlayerInteraction interactor)
@@ -72,7 +74,7 @@ public class SafeBox : Interactable
         return ok;
     }
 
-    private IEnumerator OpenSequence()
+private IEnumerator OpenSequence()
     {
         busy = true;
         MonoBehaviour ctrl = PauseMenu.FindPlayerController();
@@ -80,14 +82,14 @@ public class SafeBox : Interactable
         yield return new WaitForSeconds(0.5f);
 
         bool main = pendingCode == MainCode;
+        GameState.R3SafeItem = main ? "GameBoy" : "Rock";
+        ShowItems();   // door is still shut: the other item is hidden before anyone can see it
         Sfx.Play(SfxKind.SafeOpen);
         yield return Swing(0f, doorOpenAngle, 1.1f);
 
         GameState.R3SafeOpen = true;
-        GameState.R3SafeItem = main ? "GameBoy" : "Rock";
         if (main) GameState.R3MainDone = true; else GameState.R3EggDone = true;
         GameState.UnlockedTracks.Add(main ? "Room03_Main" : "Room03_Egg");
-        ShowItems();
         GameState.RaiseChanged();
 
         yield return new WaitForSeconds(1.0f);

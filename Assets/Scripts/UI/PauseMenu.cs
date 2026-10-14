@@ -184,11 +184,11 @@ public class PauseMenu : MonoBehaviour
         foreach (string id in GameState.Artifacts)
         {
             string title = GameState.ArtifactTitle(id);
-            AddArtifactRow(char.ToUpper(title[0]) + title.Substring(1), GameState.ArtifactNote(id), false);
+            AddArtifactRow(char.ToUpper(title[0]) + title.Substring(1), GameState.ArtifactNote(id), false, id);
         }
     }
 
-    private void AddArtifactRow(string title, string note, bool dim)
+    private void AddArtifactRow(string title, string note, bool dim, string id = null)
     {
         GameObject row = new GameObject("Artifact", typeof(RectTransform));
         row.transform.SetParent(artifactsContent, false);
@@ -196,12 +196,35 @@ public class PauseMenu : MonoBehaviour
         bg.color = PhoneUI.BoxFill;
         bg.raycastTarget = false;
 
+        Texture2D photo = string.IsNullOrEmpty(id) ? null : Resources.Load<Texture2D>("Room3/Artifact_" + id);
+        float left = 24f, w = 860f;
+        if (photo != null)
+        {
+            GameObject pg = new GameObject("Photo", typeof(RectTransform));
+            pg.transform.SetParent(row.transform, false);
+            RawImage ri = pg.AddComponent<RawImage>();
+            ri.texture = photo; ri.raycastTarget = false;
+            PhoneUI.Place(ri, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(20f, -14f), new Vector2(190f, 190f));
+            left = 230f; w = 660f;
+        }
         TMP_Text head = PhoneUI.Txt(row.transform, font, "Title", 32, TextAlignmentOptions.TopLeft, Accent, title);
-        PhoneUI.Place(head, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(24f, -14f), new Vector2(820f, 42f));
-        TMP_Text body = PhoneUI.Txt(row.transform, font, "Note", 24, TextAlignmentOptions.TopLeft, dim ? Dim : Warm, note);
-        float h = body.GetPreferredValues(860f, 0f).y;
-        PhoneUI.Place(body, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(24f, -60f), new Vector2(860f, h));
-        row.AddComponent<LayoutElement>().preferredHeight = h + 84f;
+        PhoneUI.Place(head, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(left, -14f), new Vector2(w, 42f));
+        // Plain (left-to-right) text; Arabic words are shaped here so a mixed English / Arabic sentence keeps its order.
+        TMP_Text body = PhoneUI.Txt(row.transform, font, "Note", 24, TextAlignmentOptions.TopLeft, dim ? Dim : Warm, "");
+        body.text = ShapeArabicRuns(note);
+        float h = body.GetPreferredValues(w, 0f).y;
+        PhoneUI.Place(body, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(left, -60f), new Vector2(w, h));
+        row.AddComponent<LayoutElement>().preferredHeight = Mathf.Max(h + 84f, photo != null ? 218f : 0f);
+    }
+
+    private static string ShapeArabicRuns(string s)
+    {
+        return System.Text.RegularExpressions.Regex.Replace(s ?? "", @"[؀-ۿ]+(\s[؀-ۿ]+)*", m =>
+        {
+            RTLTMPro.FastStringBuilder fsb = new RTLTMPro.FastStringBuilder(64);
+            RTLTMPro.RTLSupport.FixRTL(m.Value, fsb, false, true, false);
+            return fsb.ToString();
+        });
     }
 
     private static GameObject NewPage(string name, Transform parent)
@@ -364,6 +387,14 @@ public class PauseMenu : MonoBehaviour
         {
             if (IsPaused) Resume();
             else Pause();
+        }
+
+        UnityEngine.InputSystem.Keyboard kb = UnityEngine.InputSystem.Keyboard.current;
+        if (kb != null && kb.pKey.wasPressedThisFrame && CanToggle())
+        {
+            // P: quick look at the phone. Pressing it again on the Messages tab closes it.
+            if (IsPaused && pages[2].activeSelf) Resume();
+            else { if (!IsPaused) Pause(); SetTab(2); }
         }
 
         if (IsPaused)
