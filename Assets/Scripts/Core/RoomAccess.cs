@@ -19,6 +19,9 @@ public static class RoomAccess
             case "Room02":
                 return GameState.HasAllThings;     // the looping corridor - the only door that opens in the blackout
 
+            case "Room03":
+                return GameState.R2Done && !GameState.PowerOut;   // opens once the lights are back
+
             default:
                 return false;                      // every other room is locked for now
         }

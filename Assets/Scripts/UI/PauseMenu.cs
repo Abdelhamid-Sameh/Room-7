@@ -31,15 +31,15 @@ public class PauseMenu : MonoBehaviour
     private static readonly Color ButtonNormal = new Color(0.16f, 0.16f, 0.17f, 1f);
     private static readonly Color ButtonHover = new Color(0.30f, 0.25f, 0.15f, 1f);
     private static readonly Color PanelFill = new Color(0.10f, 0.10f, 0.11f, 1f);
-    private static readonly string[] TabNames = { "Menu", "Clues", "Messages" };
+    private static readonly string[] TabNames = { "Menu", "Clues", "Messages", "Artefacts" };
 
     private TMP_FontAsset font;
     private GameObject overlay;
     private MonoBehaviour playerController;
 
-    private readonly GameObject[] pages = new GameObject[3];
-    private readonly Button[] tabButtons = new Button[3];
-    private readonly TMP_Text[] tabLabels = new TMP_Text[3];
+    private readonly GameObject[] pages = new GameObject[4];
+    private readonly Button[] tabButtons = new Button[4];
+    private readonly TMP_Text[] tabLabels = new TMP_Text[4];
     private RectTransform cluesContent;
     private RectTransform contactsContent;
     private ChatView chat;
@@ -94,11 +94,11 @@ public class PauseMenu : MonoBehaviour
         Place(title.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -26f), new Vector2(440f, 50f));
         title.text = "P A U S E D";
 
-        for (int i = 0; i < 3; i++)
+        for (int i = 0; i < TabNames.Length; i++)
         {
             int index = i;
             tabButtons[i] = NewButton(card.transform, TabNames[i], -92f, () => { Sfx.Play(SfxKind.Tab); SetTab(index); },
-                                      new Vector2((i - 1) * 216f, 0f), new Vector2(200f, 48f), 24, out tabLabels[i]);
+                                      new Vector2((i - 1.5f) * 216f, 0f), new Vector2(200f, 48f), 24, out tabLabels[i]);
         }
 
         TMP_Text hint = NewText("Hint", card.transform, 18, TextAlignmentOptions.Center);
@@ -117,6 +117,7 @@ public class PauseMenu : MonoBehaviour
         BuildMenuPage(area);
         BuildCluesPage(area);
         BuildMessagesPage(area);
+        BuildArtifactsPage(area);
 
         overlay.SetActive(false);
     }
@@ -160,6 +161,49 @@ public class PauseMenu : MonoBehaviour
         chat = ChatView.Create(right.transform, font, 520f);
     }
 
+    private RectTransform artifactsContent;
+
+    private void BuildArtifactsPage(Transform parent)
+    {
+        pages[3] = NewPage("ArtifactsPage", parent);
+        Image bg = NewImage("Bg", pages[3].transform, PanelFill);
+        Fill(bg.rectTransform);
+        PhoneUI.NewScroll(pages[3].transform, out artifactsContent, 10f, 12);
+    }
+
+    private void RefreshArtifacts()
+    {
+        ClearChildren(artifactsContent);
+
+        if (GameState.Artifacts.Count == 0)
+        {
+            AddArtifactRow(" ", "Nothing yet. Some things are worth keeping.", true);
+            return;
+        }
+
+        foreach (string id in GameState.Artifacts)
+        {
+            string title = GameState.ArtifactTitle(id);
+            AddArtifactRow(char.ToUpper(title[0]) + title.Substring(1), GameState.ArtifactNote(id), false);
+        }
+    }
+
+    private void AddArtifactRow(string title, string note, bool dim)
+    {
+        GameObject row = new GameObject("Artifact", typeof(RectTransform));
+        row.transform.SetParent(artifactsContent, false);
+        Image bg = row.AddComponent<Image>();
+        bg.color = PhoneUI.BoxFill;
+        bg.raycastTarget = false;
+
+        TMP_Text head = PhoneUI.Txt(row.transform, font, "Title", 32, TextAlignmentOptions.TopLeft, Accent, title);
+        PhoneUI.Place(head, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(24f, -14f), new Vector2(820f, 42f));
+        TMP_Text body = PhoneUI.Txt(row.transform, font, "Note", 24, TextAlignmentOptions.TopLeft, dim ? Dim : Warm, note);
+        float h = body.GetPreferredValues(860f, 0f).y;
+        PhoneUI.Place(body, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(24f, -60f), new Vector2(860f, h));
+        row.AddComponent<LayoutElement>().preferredHeight = h + 84f;
+    }
+
     private static GameObject NewPage(string name, Transform parent)
     {
         GameObject go = new GameObject(name, typeof(RectTransform));
@@ -182,7 +226,7 @@ public class PauseMenu : MonoBehaviour
 
     private void SetTab(int index)
     {
-        for (int i = 0; i < 3; i++)
+        for (int i = 0; i < TabNames.Length; i++)
         {
             pages[i].SetActive(i == index);
 
@@ -197,6 +241,7 @@ public class PauseMenu : MonoBehaviour
 
         if (index == 1) RefreshClues();
         if (index == 2) RefreshContacts();
+        if (index == 3) RefreshArtifacts();
     }
 
     private static void ClearChildren(RectTransform parent)
@@ -332,7 +377,7 @@ public class PauseMenu : MonoBehaviour
     private static bool CanToggle()
     {
         // Not during the opening phone scene, while a paper is being read, or while the screen is fading.
-        if (PhoneUI.Busy || DocumentViewer.IsOpen || Time.frameCount == DocumentViewer.ClosedFrame) return false;
+        if (PhoneUI.Busy || DocumentViewer.IsOpen || SafeKeypad.IsOpen || Time.frameCount == SafeKeypad.ClosedFrame || Time.frameCount == DocumentViewer.ClosedFrame) return false;
         return !(GameSystems.HasInstance && GameSystems.Instance.Fader != null && GameSystems.Instance.Fader.IsBusy);
     }
 

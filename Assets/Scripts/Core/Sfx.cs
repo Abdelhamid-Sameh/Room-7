@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-public enum SfxKind { Click, Tidy, Paper, Pickup, Switch, LockerOpen, LockerClose, SwitchOff, Wipe, Ping, Send, Tab, PowerDown, Fuse, PowerOn, Door }
+public enum SfxKind { Click, Tidy, Paper, Pickup, Switch, LockerOpen, LockerClose, SwitchOff, Wipe, Ping, Send, Tab, PowerDown, Fuse, PowerOn, Door, Keypad, SafeOpen, SafeClose }
 
 /// <summary>
 /// Interaction sound effects. A kind plays the recording at Assets/Resources/Sfx/&lt;Name&gt; when one exists
@@ -67,6 +67,9 @@ public static class Sfx
         else if (i is LightSwitch) k = i.Prompt.Contains("off") ? SfxKind.Switch : SfxKind.SwitchOff;   // prompt says what the NEXT press does
         else if (i is DoorTransition) k = ((DoorTransition)i).IsLocked ? SfxKind.Click : SfxKind.Door;
         else if (i is SwingDoor) k = ((SwingDoor)i).Opened ? SfxKind.Door : SfxKind.Click;
+        else if (i is HingeDoor) k = SfxKind.Door;
+        else if (i is SafeBox) return;   // plays its own sounds
+        else if (i is ArtifactPickup) k = SfxKind.Pickup;
         else if (i is FuseBox) return;   // plays its own sounds
         else if (i is Locker) k = ((Locker)i).IsOpen ? SfxKind.LockerOpen : SfxKind.LockerClose;
         Play(k);
@@ -84,6 +87,9 @@ public static class Sfx
             case SfxKind.PowerOn:   path = "Room2/Power_on"; break;
             case SfxKind.Fuse:      path = "Room2/Fuse"; break;
             case SfxKind.Door:      path = "Room2/Door"; break;
+            case SfxKind.Keypad:    path = "Room3/keypad"; break;
+            case SfxKind.SafeOpen:
+            case SfxKind.SafeClose: path = "Room3/safe_open_close"; break;
             case SfxKind.LockerOpen:  path = "Sfx/Locker_Open"; break;
             case SfxKind.LockerClose: path = "Sfx/Locker_Close"; break;
             case SfxKind.SwitchOff:   path = "Sfx/Switch"; break;
@@ -125,6 +131,8 @@ public static class Sfx
             case SfxKind.SwitchOff:  start = 1.40f; len = 0.20f; break;
             case SfxKind.Wipe:       start = 0.15f; len = 0.55f; peak = 0.4f; break;
             case SfxKind.PowerOn:    start = 5.00f; len = 3.00f; break;   // only 0:05 - 0:08 of the recording
+            case SfxKind.SafeOpen:   start = 4.00f; len = 1.00f; break;   // 0:04 - 0:05
+            case SfxKind.SafeClose:  start = 9.00f; len = 1.00f; break;   // 0:09 - 0:10
             default: return src;
         }
 

@@ -298,6 +298,7 @@ public class HUDController : MonoBehaviour
             new TaskDef { Group = 1, Label = "Take the radio",              IsDone = () => GameState.HasRadio },
             new TaskDef { Group = 2, Label = "Clean room 1",                IsDone = () => GameState.IsRoomCleaned("Room01") },
             new TaskDef { Group = 2, Label = "Clean room 2",                IsDone = () => GameState.R2Done },
+            new TaskDef { Group = 2, Label = "Clean room 3",                IsDone = () => GameState.IsRoomCleaned("Room03") },
         };
 
         taskRows = new TaskRow[defs.Length];

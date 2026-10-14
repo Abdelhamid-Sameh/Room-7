@@ -53,6 +53,10 @@ public class TidyItem : Interactable
     [SerializeField] private SkinnedMeshRenderer softBody;
     [SerializeField] private int softShapeIndex = 0;
 
+    [Header("Clue")]
+    [Tooltip("Optional clue text added to GameState.Clues when this is tidied (what the tidying revealed).")]
+    [SerializeField] private string clueOnTidy = "";
+
     [Header("Look")]
     [SerializeField] private Color glowColor = new Color(1f, 0.72f, 0.28f);
     [Tooltip("How strongly it glows while untidy. 0 = no glow.")]
@@ -357,6 +361,7 @@ public class TidyItem : Interactable
     {
         IsTidy = true;
         GameState.TidiedItems.Add(Key);
+        if (!string.IsNullOrEmpty(clueOnTidy)) GameState.AddClue(clueOnTidy);
 
         if (marker != null) { Destroy(marker.gameObject); marker = null; }
         if (TidyRoom.Instance != null) TidyRoom.Instance.NotifyChanged();

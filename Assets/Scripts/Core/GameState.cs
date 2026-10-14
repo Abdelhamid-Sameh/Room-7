@@ -131,6 +131,40 @@ public static class GameState
         RaiseChanged();
     }
 
+    // --- room 3: the four connected rooms ---------------------------------------
+    /// <summary>Open hinged doors (id -> signed angle), so they stay open across scene loads.</summary>
+    public static readonly Dictionary<string, float> DoorAngles = new Dictionary<string, float>();
+    public static bool R3SafeOpen;
+    /// <summary>What is waiting inside the open safe ('GameBoy', 'Rock', or empty).</summary>
+    public static string R3SafeItem = "";
+    public static bool R3MainDone, R3EggDone;     // 210802 / 010503 have each been used
+
+    // --- artefacts (pause-menu Artefacts tab) ------------------------------------
+    public static readonly List<string> Artifacts = new List<string>();
+    public static bool HasArtifact(string id) { return Artifacts.Contains(id); }
+
+    public static void AddArtifact(string id)
+    {
+        if (string.IsNullOrEmpty(id) || Artifacts.Contains(id)) return;
+        Artifacts.Add(id);
+        RaiseChanged();
+    }
+
+    public static string ArtifactTitle(string id)
+    {
+        switch (id) { case "GameBoy": return "red Game Boy"; case "Rock": return "rock"; default: return id; }
+    }
+
+    public static string ArtifactNote(string id)
+    {
+        switch (id)
+        {
+            case "GameBoy": return "A red retro console. The screen is dark, but the buttons are worn smooth - someone played this a lot.";
+            case "Rock": return "A plain grey rock. Heavier than it looks. Why was it locked away?";
+            default: return "";
+        }
+    }
+
     // --- locker doors (so they stay open / closed across scene loads) -----
     public static bool NabilLockerOpen;
     public static bool MalakLockerOpen;
@@ -179,6 +213,10 @@ public static class GameState
         HasFlashlight = false; FlashlightOn = false; HasFuse = false;
         R2Done = false; R2SideOpen = false; R2Replied = false; PowerOut = false;
         UnlockedTracks.Clear();
+
+        DoorAngles.Clear();
+        R3SafeOpen = false; R3SafeItem = ""; R3MainDone = false; R3EggDone = false;
+        Artifacts.Clear();
 
         RadioTrackIndex = 0;
         RadioPlaying = false;

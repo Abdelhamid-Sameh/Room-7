@@ -54,3 +54,11 @@ MonoBehaviour:
     displayName: "\u0634\u0637 \u0627\u0633\u0643\u0646\u062F\u0631\u064A\u0629 -
       \u0641\u064A\u0631\u0648\u0632"
     unlockKey: Room02
+  - clip: {fileID: 8300000, guid: 7e3507685896a53459d8df1311f977de, type: 3}
+    displayName: "\u064A\u0627 \u0623\u062D\u0644\u0649 \u0639\u064A\u0648\u0646
+      - \u062C\u062F\u0644"
+    unlockKey: Room03_Main
+  - clip: {fileID: 8300000, guid: 6f2e4640f60845f458e1e6bac5fc17bf, type: 3}
+    displayName: "\u0634\u064A\u0631\u0648\u0641\u0648\u0628\u064A\u0627 - \u0645\u0633\u0627\u0631
+      \u0625\u062C\u0628\u0627\u0631\u0649"
+    unlockKey: Room03_Egg
