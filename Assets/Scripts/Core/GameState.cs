@@ -92,7 +92,7 @@ public static class GameState
         return true;
     }
 
-    private static int DigitClueRank(string c) { return c.StartsWith("21 - ") ? 0 : c.StartsWith("08 - ") ? 1 : c.StartsWith("02 - ") ? 2 : -1; }
+    private static int DigitClueRank(string c) { return c.StartsWith("21 - ") ? 0 : c.StartsWith("08 - ") ? 1 : c.StartsWith("A cinema ticket") ? 2 : -1; }
 
     // --- phone messages ---------------------------------------------------
     public struct ChatMessage { public string Contact; public string Text; public bool FromPlayer; }

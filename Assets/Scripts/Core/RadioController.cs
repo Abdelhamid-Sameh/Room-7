@@ -25,7 +25,8 @@ public class RadioController : MonoBehaviour
     private AudioSource source;
 
     private bool isPaused;     // paused part-way through the current track
-    private bool wasPlaying;   // used to tell a track that really ended from a stream that has not started yet
+    private bool wasPlaying;
+    private bool deadWas;   // the power state the radio last reacted to   // used to tell a track that really ended from a stream that has not started yet
     private float lastTime;
 
     public int TrackCount => playlist != null ? playlist.Count : 0;
@@ -114,6 +115,10 @@ public class RadioController : MonoBehaviour
 
     private void Update()
     {
+        // Power cut: the radio goes quiet (paused, so it carries on when the lights are back) and ignores the keys.
+        if (deadWas != GameState.PowerOut) { deadWas = GameState.PowerOut; Apply(); }
+        if (GameState.PowerOut) return;
+
         if (!GameState.HasRadio || PauseMenu.IsPaused) return;
 
         if (GameInput.RadioPlayPressed) TogglePlayPause();
@@ -207,7 +212,7 @@ public class RadioController : MonoBehaviour
             ApplyVolume();
         }
 
-        if (GameState.RadioPlaying)
+        if (GameState.RadioPlaying && !GameState.PowerOut)
         {
             if (!source.isPlaying)
             {

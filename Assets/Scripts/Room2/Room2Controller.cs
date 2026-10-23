@@ -22,8 +22,7 @@ public class Room2Controller : MonoBehaviour
     {
         yield return new WaitForSeconds(3.5f);
         Sfx.Play(SfxKind.PowerDown);
-        GameState.PowerOut = true;
-        GameState.RaiseChanged();
+        HotelPower.Cut();
         CameraEffects.Shake(0.5f);
         PhoneUI.TextMalakLightsOut();
     }

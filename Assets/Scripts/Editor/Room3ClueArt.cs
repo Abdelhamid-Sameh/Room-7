@@ -37,17 +37,24 @@ public static class Room3ClueArt
             L("21", Reenie, 230f, new Color(0.93f, 0.95f, 0.93f, 0.92f), 256f, 120f, 5f) }, new Box[0]);
         Save("Assets/Textures/Generated/MirrorNumber.png", mirror, 512, 256, true);
 
-        // 2. cinema ticket stub (only the month is a clue: the date stamp reads --/02/--)
+        // 2. cinema ticket stub (the date stamp reads 01/05/02)
         Color paper = new Color(0.90f, 0.85f, 0.70f);
         Color ink = new Color(0.16f, 0.13f, 0.12f);
         List<Box> tb = new List<Box>();
         tb.Add(B(34f, 200f, 68f, 400f, new Color(0.62f, 0.13f, 0.11f)));
         for (int i = 0; i < 20; i++) tb.Add(B(104f, 14f + i * 20f, 4f, 10f, new Color(0.55f, 0.50f, 0.40f)));
+        // the date reads 01/05/02: the last two digits (blue) are the clue, the red ones are decoys
+        Color red = new Color(0.72f, 0.10f, 0.09f, 1f), blue = new Color(0.10f, 0.26f, 0.82f, 1f);
+        float dw = 45f;   // width of one typewriter character
         Color[] ticket = Render(800, 400, paper, false, new Line[] {
             L("ALHAMBRA CINEMA", Courier, 44f, ink, 470f, 338f, 0f),
             L("ADMIT ONE", Courier, 70f, ink, 470f, 268f, 0f),
             L("SCREEN 3    ROW F    SEAT 12", Courier, 30f, ink, 470f, 205f, 0f),
-            L("--/02/--", Elite, 76f, new Color(0.30f, 0.20f, 0.50f, 1f), 450f, 125f, -4f),
+            L("01", Elite, 76f, red, 450f - 3f * dw, 125f, 0f),
+            L("/", Elite, 76f, ink, 450f - 1.5f * dw, 125f, 0f),
+            L("05", Elite, 76f, red, 450f, 125f, 0f),
+            L("/", Elite, 76f, ink, 450f + 1.5f * dw, 125f, 0f),
+            L("02", Elite, 76f, blue, 450f + 3f * dw, 125f, 0f),
             L("No. 004718", Courier, 26f, new Color(0.45f, 0.4f, 0.35f), 470f, 48f, 0f) }, tb.ToArray());
         Grain(ticket, 800, 400, 0.05f, 0.012f);
         Save("Assets/Resources/Room3/TicketStub.png", ticket, 800, 400, false);

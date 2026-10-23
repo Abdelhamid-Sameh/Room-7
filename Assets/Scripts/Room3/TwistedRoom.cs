@@ -29,7 +29,7 @@ public class TwistedRoom : MonoBehaviour
             foreach (CinemachineCamera c in FindObjectsByType<CinemachineCamera>(FindObjectsSortMode.None))
                 if (c.Follow != null) { cam = c; baseFov = c.Lens.FieldOfView; break; }
 
-        bool inside = player != null && new Bounds(center, size).Contains(player.transform.position);
+        bool inside = player != null && new Bounds(center, size).Contains(RoomFrame.ToLocal(this, player.transform.position));
         amount = Mathf.MoveTowards(amount, inside ? 1f : 0f, Time.deltaTime * 0.5f);
 
         if (cam != null)

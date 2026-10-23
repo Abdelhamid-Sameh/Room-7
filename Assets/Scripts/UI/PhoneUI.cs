@@ -221,12 +221,20 @@ public class PhoneUI : MonoBehaviour
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
+        if (scene.name == CorridorScene && mode == LoadSceneMode.Single) OnBackInCorridor();
+    }
+
+    /// <summary>The corridor scene was (re)loaded, or the player walked out of a streamed room into it.</summary>
+    public static void BackInCorridor() { if (Instance != null) Instance.OnBackInCorridor(); }
+
+    private void OnBackInCorridor()
+    {
         // Back in the corridor after the staff room: Nabil texts Malak.
-        if (scene.name == CorridorScene && GameState.HasVisited(StaffScene) && !GameState.MalakContacted)
+        if (GameState.HasVisited(StaffScene) && !GameState.MalakContacted)
             StartCoroutine(TextMalak());
 
         // Room 2 is finished and Nabil is back in the corridor: Malak answers.
-        if (scene.name == CorridorScene && GameState.R2Done && !GameState.R2Replied)
+        if (GameState.R2Done && !GameState.R2Replied)
             StartCoroutine(MalakReplies());
     }
 

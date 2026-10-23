@@ -30,6 +30,9 @@ public class AmbientAudio : MonoBehaviour
     private static AmbientAudio instance;
     private AudioSource source;
     private AudioLowPassFilter lowPass;
+    private AudioSource dark;        // the loop that plays while the power is out
+    private bool lastOut;
+    private const float DarkVolume = 0.4f;
 
     private void Awake()
     {
@@ -53,7 +56,20 @@ public class AmbientAudio : MonoBehaviour
         source.spatialBlend = 0f;   // plain 2D sound
 
         lowPass = child.AddComponent<AudioLowPassFilter>();
+
+        GameObject d = new GameObject("DarkSource");
+        d.transform.SetParent(transform, false);
+        dark = d.AddComponent<AudioSource>();
+        dark.clip = Resources.Load<AudioClip>("Sfx/ScaryHallway");
+        dark.loop = true;
+        dark.playOnAwake = false;
+        dark.spatialBlend = 0f;
         ApplyLevels();
+    }
+
+    private void Update()
+    {
+        if (GameState.PowerOut != lastOut) ApplyLevels();   // also catches the power being switched without a Changed event
     }
 
     // Playback starts in Start, not Awake: GameSystems moves itself to the persistent scene
@@ -100,6 +116,14 @@ public class AmbientAudio : MonoBehaviour
         if (source == null) return;
 
         source.volume = GameState.PowerOut ? 0f : volume * AudioLevels.AmbientVolume;   // the street goes quiet in the blackout
+
+        lastOut = GameState.PowerOut;
+        if (dark != null && dark.clip != null)
+        {
+            dark.volume = DarkVolume * AudioLevels.AmbientVolume;
+            if (lastOut && !dark.isPlaying) dark.Play();
+            else if (!lastOut && dark.isPlaying) dark.Stop();
+        }
 
         if (lowPass != null)
         {

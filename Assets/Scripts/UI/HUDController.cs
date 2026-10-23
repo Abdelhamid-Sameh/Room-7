@@ -743,7 +743,7 @@ public class HUDController : MonoBehaviour
     {
         if (radioPanel == null) return;
 
-        bool show = GameState.HasRadio;
+        bool show = GameState.HasRadio && !GameState.PowerOut;   // the radio is dead in a blackout
         if (radioPanel.activeSelf != show) radioPanel.SetActive(show);
         if (!show) return;
 

@@ -16,23 +16,28 @@ public class PowerReactor : MonoBehaviour
     private float[] baseIntensity;
     private readonly List<Material> glow = new List<Material>();
     private readonly List<Color> glowColor = new List<Color>();
-    private float ambientIntensity;
-    private Color ambientLight;
-    private float reflectionIntensity;
+    // Shared by every reactor (a streamed room brings its own): the lighting as authored, not as left dark by another reactor.
+    private static float ambientIntensity, reflectionIntensity;
+    private static Color ambientLight;
+    private static int alive;
+    private bool started;
     private bool on = true;
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetStatics() { alive = 0; }
 
     private void Start()
     {
         Light[] all = FindObjectsByType<Light>(FindObjectsInactive.Include, FindObjectsSortMode.None);
         List<Light> keep = new List<Light>();
-        foreach (Light l in all) if (l.gameObject.name != "Flashlight") keep.Add(l);
+        foreach (Light l in all) if (l.gameObject.name != "Flashlight" && l.gameObject.scene == gameObject.scene) keep.Add(l);   // only this scene's lights
         lights = keep.ToArray();
         baseIntensity = new float[lights.Length];
         for (int i = 0; i < lights.Length; i++) baseIntensity[i] = lights[i].intensity;
 
         foreach (Renderer r in FindObjectsByType<Renderer>(FindObjectsSortMode.None))
         {
-            if (r is ParticleSystemRenderer) continue;
+            if (r is ParticleSystemRenderer || r.gameObject.scene != gameObject.scene) continue;
             foreach (Material m in r.materials)   // instances, so nothing outside this scene changes
             {
                 if (m == null || !m.HasProperty("_EmissionColor") || !m.IsKeywordEnabled("_EMISSION")) continue;
@@ -42,9 +47,13 @@ public class PowerReactor : MonoBehaviour
             }
         }
 
-        ambientIntensity = RenderSettings.ambientIntensity;
-        ambientLight = RenderSettings.ambientLight;
-        reflectionIntensity = RenderSettings.reflectionIntensity;
+        if (alive++ == 0)
+        {
+            ambientIntensity = RenderSettings.ambientIntensity;
+            ambientLight = RenderSettings.ambientLight;
+            reflectionIntensity = RenderSettings.reflectionIntensity;
+        }
+        started = true;
 
         on = !GameState.PowerOut;
         Apply(on ? 1f : 0f);
@@ -61,7 +70,10 @@ public class PowerReactor : MonoBehaviour
 
     private void OnDestroy()
     {
-        // Leave the (shared) render settings as the scene authored them.
+        if (!started) return;
+        // The last reactor out leaves the (shared) render settings as the scene authored them.
+        if (--alive > 0) return;
+        alive = 0;
         RenderSettings.ambientIntensity = ambientIntensity;
         RenderSettings.ambientLight = ambientLight;
         RenderSettings.reflectionIntensity = reflectionIntensity;

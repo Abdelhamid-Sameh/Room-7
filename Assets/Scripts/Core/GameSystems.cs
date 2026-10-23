@@ -83,7 +83,7 @@ public class GameSystems : MonoBehaviour
 
     private static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        GameState.Visit(scene.name);
+        if (mode == LoadSceneMode.Single) GameState.Visit(scene.name);   // streamed rooms count as visited once you walk in
     }
 
     private void OnStateChanged()

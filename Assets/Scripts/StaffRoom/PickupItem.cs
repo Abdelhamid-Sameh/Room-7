@@ -18,10 +18,10 @@ public enum PickupKind
     /// </summary>
     InspectMalakUniform,
 
-    /// <summary>Room 2: the flashlight left on the corridor floor after the first loop.</summary>
+    /// <summary>The flashlight, hidden away in a drawer in Room 1.</summary>
     Flashlight,
 
-    /// <summary>Room 2: the fuse lying in the dark corridor after the second loop.</summary>
+    /// <summary>The fuse, lying on the hutch in the corridor.</summary>
     Fuse
 }
 
@@ -96,10 +96,6 @@ public class PickupItem : Interactable, ICarryable
     private void Start()
     {
         // Back from another scene: anything already taken must stay taken.
-        // Room 2 props only exist once the loop that reveals them has been walked.
-        if (kind == PickupKind.Flashlight && GameState.R2Loops < 1) { gameObject.SetActive(false); return; }
-        if (kind == PickupKind.Fuse && (GameState.R2Loops < 2 || GameState.R2Done)) { gameObject.SetActive(false); return; }
-
         if (kind == PickupKind.InspectMalakUniform || !AlreadyHandled) return;
 
         if (kind == PickupKind.WearUniform && GameState.UniformWorn && activateOnTaken != null)

@@ -23,11 +23,12 @@ public class FuseBox : Interactable
         get
         {
             if (!coverOpen) return "Open the fusebox";
+            if (!GameState.PowerOut) return "The fusebox looks fine";   // the fuse only goes in once the power is out
             return GameState.HasFuse ? "Insert the fuse" : "The fuse is gone";
         }
     }
 
-    public override string KeyHint { get { return coverOpen && !GameState.HasFuse ? "" : "E"; } }
+    public override string KeyHint { get { return coverOpen && (!GameState.HasFuse || !GameState.PowerOut) ? "" : "E"; } }
     public override bool CanInteract { get { return !GameState.R2Done && !busy; } }
 
     private void Start()
@@ -51,7 +52,7 @@ public class FuseBox : Interactable
         if (busy || GameState.R2Done) return;
 
         if (!coverOpen) { StartCoroutine(OpenCover()); return; }
-        if (GameState.HasFuse) StartCoroutine(Insert());
+        if (GameState.HasFuse && GameState.PowerOut) StartCoroutine(Insert());
     }
 
     private IEnumerator OpenCover()
