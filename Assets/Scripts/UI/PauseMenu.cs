@@ -408,7 +408,7 @@ public class PauseMenu : MonoBehaviour
     private static bool CanToggle()
     {
         // Not during the opening phone scene, while a paper is being read, or while the screen is fading.
-        if (PhoneUI.Busy || DocumentViewer.IsOpen || SafeKeypad.IsOpen || Time.frameCount == SafeKeypad.ClosedFrame || Time.frameCount == DocumentViewer.ClosedFrame) return false;
+        if (PhoneUI.Busy || DocumentViewer.IsOpen || SafeKeypad.IsOpen || GameBoyConsole.Playing || Time.frameCount == GameBoyConsole.ClosedFrame || Time.frameCount == SafeKeypad.ClosedFrame || Time.frameCount == DocumentViewer.ClosedFrame) return false;
         return !(GameSystems.HasInstance && GameSystems.Instance.Fader != null && GameSystems.Instance.Fader.IsBusy);
     }
 

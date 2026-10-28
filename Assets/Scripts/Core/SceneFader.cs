@@ -59,6 +59,66 @@ public class SceneFader : MonoBehaviour
         StartCoroutine(LoadRoutine(sceneName, spawnId));
     }
 
+    /// <summary>
+    /// The lights cut out: the screen is black at once (no LOADING text), the scene loads behind it, a riser plays
+    /// in the dark and then the lights flicker back on. 'onLit' runs the moment they do.
+    /// </summary>
+    public void LoadFromBlackout(string sceneName, string spawnId, AudioClip riser, System.Action onLit)
+    {
+        if (busy || group == null) return;
+        if (!Application.CanStreamedLevelBeLoaded(sceneName))
+        {
+            Debug.LogError($"[SceneFader] Scene '{sceneName}' is not in File > Build Settings (or is disabled there).");
+            return;
+        }
+        StartCoroutine(BlackoutRoutine(sceneName, spawnId, riser, onLit));
+    }
+
+    private IEnumerator BlackoutRoutine(string sceneName, string spawnId, AudioClip riser, System.Action onLit)
+    {
+        busy = true;
+        try
+        {
+            group.alpha = 1f;
+            if (loadingText != null) loadingText.alpha = 0f;
+            GameState.LastSpawnId = spawnId;
+
+            float hold = riser != null ? Mathf.Clamp(riser.length - 0.4f, 2.5f, 12f) : 3f;
+            if (riser != null)
+            {
+                GameObject go = new GameObject("Riser");
+                DontDestroyOnLoad(go);
+                AudioSource src = go.AddComponent<AudioSource>();
+                src.spatialBlend = 0f;
+                src.clip = riser;
+                src.volume = Mathf.Clamp01(AudioLevels.SfxVolume);
+                src.Play();
+                Destroy(go, riser.length + 0.5f);
+            }
+
+            AsyncOperation op = SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Single);
+            float held = 0f;
+            while (op != null && !op.isDone) { held += Time.unscaledDeltaTime; yield return null; }
+            for (int i = 0; i < 5; i++) { held += Time.unscaledDeltaTime; yield return null; }
+            while (held < hold) { held += Time.unscaledDeltaTime; yield return null; }
+
+            onLit?.Invoke();
+            // a tired tube catching: on, off, on, flicker, on
+            float[] levels = { 0.55f, 0f, 0.8f, 0.15f, 0.6f };
+            float[] spans = { 0.07f, 0.10f, 0.08f, 0.06f, 0.12f };
+            for (int i = 0; i < levels.Length; i++)
+            {
+                group.alpha = 1f - levels[i];
+                for (float t = 0f; t < spans[i]; t += Time.unscaledDeltaTime) yield return null;
+            }
+            group.alpha = 0f;
+        }
+        finally
+        {
+            busy = false;
+        }
+    }
+
     private IEnumerator LoadRoutine(string sceneName, string spawnId)
     {
         busy = true;

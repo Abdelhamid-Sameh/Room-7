@@ -623,7 +623,7 @@ public class HUDController : MonoBehaviour
     {
         RefreshTasks();
         RefreshRadio();
-        if (phoneHint != null) phoneHint.SetActive(GameState.IntroDone);
+        if (phoneHint != null) phoneHint.SetActive(GameState.IntroDone && !GameState.Limbo);
     }
 
     // ------------------------------------------------------------ refresh --
@@ -736,14 +736,15 @@ public class HUDController : MonoBehaviour
         tasksCard.sizeDelta = new Vector2(CardWidth, tasksCardHeight);
 
         // no tasks on screen (between groups, or all done): the card goes too
-        if (tasksCard.gameObject.activeSelf != anyShown) tasksCard.gameObject.SetActive(anyShown);
+        bool showCard = anyShown && !GameState.Limbo;   // no task list in the strange corridor
+        if (tasksCard.gameObject.activeSelf != showCard) tasksCard.gameObject.SetActive(showCard);
     }
 
     private void RefreshRadio()
     {
         if (radioPanel == null) return;
 
-        bool show = GameState.HasRadio && !GameState.PowerOut;   // the radio is dead in a blackout
+        bool show = GameState.HasRadio && !GameState.RadioDead;   // the radio is dead in a blackout and in the strange corridor
         if (radioPanel.activeSelf != show) radioPanel.SetActive(show);
         if (!show) return;
 

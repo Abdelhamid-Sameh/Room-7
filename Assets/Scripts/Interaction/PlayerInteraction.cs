@@ -76,7 +76,7 @@ public class PlayerInteraction : MonoBehaviour
 
     private void Update()
     {
-        if (PauseMenu.IsPaused || IsTransitioning || DocumentViewer.IsOpen || SafeKeypad.IsOpen || PhoneUI.Busy || Time.frameCount == DocumentViewer.ClosedFrame)
+        if (PauseMenu.IsPaused || IsTransitioning || DocumentViewer.IsOpen || SafeKeypad.IsOpen || GameBoyConsole.Playing || PhoneUI.Busy || Time.frameCount == DocumentViewer.ClosedFrame)
         {
             CancelHold();
             current = null;

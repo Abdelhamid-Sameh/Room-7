@@ -123,6 +123,20 @@ public static class GameState
     /// <summary>The whole floor is without power: dark corridor, no street noise, every room but Room 2 locked.</summary>
     public static bool PowerOut;
 
+    // --- after room 3: the Unknown Number and the strange corridor ---
+    /// <summary>Nabil has left the hotel for the strange corridor (no HUD cards, dead radio, no street noise).</summary>
+    public static bool Limbo;
+    /// <summary>The lights are back on in the strange corridor, so its hallway sound may play.</summary>
+    public static bool LimboLit;
+    /// <summary>The Unknown Number's first conversation has played.</summary>
+    public static bool UnknownTexted;
+    /// <summary>The Unknown Number's texts in the Game Boy room have played.</summary>
+    public static bool UnknownGameBoyTexted;
+    /// <summary>The Game Boy maze has been won.</summary>
+    public static bool GameBoySolved;
+    /// <summary>The radio is dead in a blackout and in the strange corridor.</summary>
+    public static bool RadioDead => PowerOut || Limbo;
+
     /// <summary>Radio tracks earned so far (playlist 'unlockKey').</summary>
     public static readonly HashSet<string> UnlockedTracks = new HashSet<string>();
     public static bool IsTrackUnlocked(string key) { return string.IsNullOrEmpty(key) || UnlockedTracks.Contains(key); }
@@ -217,6 +231,7 @@ public static class GameState
         R2Loops = 0;
         HasFlashlight = false; FlashlightOn = false; HasFuse = false;
         R2Done = false; R2SideOpen = false; R2Replied = false; PowerOut = false;
+        Limbo = false; LimboLit = false; UnknownTexted = false; UnknownGameBoyTexted = false; GameBoySolved = false;
         UnlockedTracks.Clear();
 
         DoorAngles.Clear();

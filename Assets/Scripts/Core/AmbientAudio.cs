@@ -31,7 +31,7 @@ public class AmbientAudio : MonoBehaviour
     private AudioSource source;
     private AudioLowPassFilter lowPass;
     private AudioSource dark;        // the loop that plays while the power is out
-    private bool lastOut;
+    private bool lastOut, limboWas;
     private const float DarkVolume = 0.4f;
 
     private void Awake()
@@ -69,7 +69,7 @@ public class AmbientAudio : MonoBehaviour
 
     private void Update()
     {
-        if (GameState.PowerOut != lastOut) ApplyLevels();   // also catches the power being switched without a Changed event
+        if (GameState.PowerOut != lastOut || (GameState.Limbo && GameState.LimboLit) != limboWas) { limboWas = GameState.Limbo && GameState.LimboLit; ApplyLevels(); }   // also catches the power being switched without a Changed event
     }
 
     // Playback starts in Start, not Awake: GameSystems moves itself to the persistent scene
@@ -115,14 +115,15 @@ public class AmbientAudio : MonoBehaviour
     {
         if (source == null) return;
 
-        source.volume = GameState.PowerOut ? 0f : volume * AudioLevels.AmbientVolume;   // the street goes quiet in the blackout
+        source.volume = (GameState.PowerOut || GameState.Limbo) ? 0f : volume * AudioLevels.AmbientVolume;   // the street goes quiet in the blackout
 
         lastOut = GameState.PowerOut;
         if (dark != null && dark.clip != null)
         {
             dark.volume = DarkVolume * AudioLevels.AmbientVolume;
-            if (lastOut && !dark.isPlaying) dark.Play();
-            else if (!lastOut && dark.isPlaying) dark.Stop();
+            bool wantDark = lastOut || (GameState.Limbo && GameState.LimboLit);   // the strange corridor has the hallway loop, once its lights are on
+            if (wantDark && !dark.isPlaying) dark.Play();
+            else if (!wantDark && dark.isPlaying) dark.Stop();
         }
 
         if (lowPass != null)

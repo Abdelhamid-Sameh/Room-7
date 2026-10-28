@@ -116,8 +116,8 @@ public class RadioController : MonoBehaviour
     private void Update()
     {
         // Power cut: the radio goes quiet (paused, so it carries on when the lights are back) and ignores the keys.
-        if (deadWas != GameState.PowerOut) { deadWas = GameState.PowerOut; Apply(); }
-        if (GameState.PowerOut) return;
+        if (deadWas != GameState.RadioDead) { deadWas = GameState.RadioDead; Apply(); }
+        if (GameState.RadioDead) return;
 
         if (!GameState.HasRadio || PauseMenu.IsPaused) return;
 
@@ -212,7 +212,7 @@ public class RadioController : MonoBehaviour
             ApplyVolume();
         }
 
-        if (GameState.RadioPlaying && !GameState.PowerOut)
+        if (GameState.RadioPlaying && !GameState.RadioDead)
         {
             if (!source.isPlaying)
             {

@@ -238,6 +238,85 @@ public class PhoneUI : MonoBehaviour
             StartCoroutine(MalakReplies());
     }
 
+    // ----------------------------------------------------- the Unknown Number --
+
+    private const string Unknown = "Unknown Number";
+    public const string LimboCorridorScene = "Limbo_Corridor";
+
+    /// <summary>Nabil has stepped out of Room 3 (called by its streamed door). Once the safe has been opened, the Unknown Number texts.</summary>
+    public static void LeftRoom3()
+    {
+        if (Instance != null && GameState.R3MainDone && !GameState.UnknownTexted) Instance.StartCoroutine(Instance.UnknownNumber());
+    }
+
+    private IEnumerator UnknownNumber()
+    {
+        GameState.UnknownTexted = true;
+        yield return Wait(1.2f);
+
+        // the phone buzzes before Nabil reaches for it
+        Sfx.Play(SfxKind.Ping);
+        yield return Wait(0.5f);
+        Sfx.Play(SfxKind.Ping);
+        yield return Wait(0.6f);
+
+        Busy = true;
+        MonoBehaviour ctrl = PauseMenu.FindPlayerController();
+        if (ctrl != null) ctrl.enabled = false;
+
+        Image dim = Img("Dim", root, new Color(0f, 0f, 0f, 0f));
+        Fill(dim);
+        RectTransform phone;
+        ChatView chat;
+        BuildPhone(dim.transform, out phone, out chat, Unknown, "?", "", "03:33");
+        yield return Slide(phone, dim, true);
+        yield return Wait(0.8f);
+
+        yield return Receive(chat, Unknown, "هى دى الحياة الى كنت راسمها لنفسك ؟", 2.2f);
+        yield return Wait(1.8f);
+        yield return Send(chat, Unknown, "مين معايا ؟؟", 1.5f);
+        yield return Wait(1.6f);
+        yield return Receive(chat, Unknown, "طبعا مش فاكرنى", 1.8f);
+        yield return Wait(2.0f);
+        yield return Receive(chat, Unknown, "هفكرك", 1.3f);
+        yield return Wait(1.6f);
+
+        // ...and the hotel goes dark
+        Sfx.Play(SfxKind.PowerDown);
+        GameState.Limbo = true;   // the radio and the street noise die with the lights, the HUD cards go
+        GameState.RaiseChanged();
+        AudioClip riser = Resources.Load<AudioClip>("Limbo/ScaryRiser");
+        if (GameSystems.HasInstance && GameSystems.Instance.Fader != null)
+            GameSystems.Instance.Fader.LoadFromBlackout(LimboCorridorScene, "Limbo_Start", riser, () => { GameState.LimboLit = true; GameState.RaiseChanged(); });
+        yield return null;
+        Destroy(dim.gameObject);
+        Busy = false;
+    }
+
+    /// <summary>The Game Boy room: the Unknown Number keeps going, as toasts while Nabil walks about.</summary>
+    public static void GameBoyRoomEntered()
+    {
+        if (Instance != null && !GameState.UnknownGameBoyTexted) Instance.StartCoroutine(Instance.UnknownInGameBoyRoom());
+    }
+
+    private IEnumerator UnknownInGameBoyRoom()
+    {
+        GameState.UnknownGameBoyTexted = true;
+        yield return Wait(8f);
+        yield return SayTo(Unknown, false, "هديتك رمتها", 0.5f);
+        yield return SayTo(Unknown, true, "كذب", 1.2f);
+        yield return SayTo(Unknown, true, "عمرها ما تعمل كده", 1.2f);
+        yield return SayTo(Unknown, false, "متعرفش الزمن ممكن يغير الواحد ازاى", 2.0f);
+    }
+
+    private IEnumerator SayTo(string contact, bool fromNabil, string text, float gap)
+    {
+        yield return Wait(gap);
+        GameState.AddMessage(contact, text, fromNabil);
+        Sfx.Play(fromNabil ? SfxKind.Send : SfxKind.Ping);
+        yield return Toast(fromNabil ? "Message sent to " + contact : contact, text, 2.4f);
+    }
+
     // --------------------------------------------------------------- intro --
 
     private IEnumerator Intro()
@@ -310,7 +389,8 @@ public class PhoneUI : MonoBehaviour
         dim.color = new Color(0f, 0f, 0f, show ? 0.6f : 0f);
     }
 
-    private void BuildPhone(Transform parent, out RectTransform phone, out ChatView chat)
+    private void BuildPhone(Transform parent, out RectTransform phone, out ChatView chat,
+                            string contact = "Manager", string initial = "M", string status = "online", string time = "02:47")
     {
         Image rim = Img("Phone", parent, new Color(0.22f, 0.22f, 0.25f), true);
         phone = Place(rim, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, -1200f), new Vector2(540f, 960f));
@@ -320,7 +400,7 @@ public class PhoneUI : MonoBehaviour
         Fill(screen, 18f);
         Place(Img("Notch", screen.transform, Color.black, true), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -10f), new Vector2(130f, 28f));
 
-        Place(Txt(screen.transform, font, "Time", 20, TextAlignmentOptions.Left, Warm, "02:47"), new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(34f, -12f), new Vector2(120f, 30f));
+        Place(Txt(screen.transform, font, "Time", 20, TextAlignmentOptions.Left, Warm, time), new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(34f, -12f), new Vector2(120f, 30f));
         Place(Img("Battery", screen.transform, Warm, true), new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-34f, -17f), new Vector2(34f, 16f));
 
         Image header = Img("Header", screen.transform, new Color(0.13f, 0.13f, 0.15f));
@@ -331,9 +411,9 @@ public class PhoneUI : MonoBehaviour
         Image avatar = Img("Avatar", header.transform, Accent);
         avatar.sprite = Circle;
         Place(avatar, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(24f, 0f), new Vector2(60f, 60f));
-        Fill(Txt(avatar.transform, font, "Initial", 30, TextAlignmentOptions.Center, new Color(0.1f, 0.08f, 0.05f), "M"));
-        Place(Txt(header.transform, font, "Name", 30, TextAlignmentOptions.Left, Warm, "Manager"), new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(104f, 12f), new Vector2(300f, 38f));
-        Place(Txt(header.transform, font, "Status", 19, TextAlignmentOptions.Left, new Color(0.45f, 0.8f, 0.5f), "online"), new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(104f, -18f), new Vector2(300f, 26f));
+        Fill(Txt(avatar.transform, font, "Initial", 30, TextAlignmentOptions.Center, new Color(0.1f, 0.08f, 0.05f), initial));
+        Place(Txt(header.transform, font, "Name", 30, TextAlignmentOptions.Left, Warm, contact), new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(104f, 12f), new Vector2(300f, 38f));
+        Place(Txt(header.transform, font, "Status", 19, TextAlignmentOptions.Left, new Color(0.45f, 0.8f, 0.5f), status), new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(104f, -18f), new Vector2(300f, 26f));
 
         Image bar = Img("InputBar", screen.transform, new Color(0.11f, 0.11f, 0.13f));
         RectTransform br = Place(bar, new Vector2(0f, 0f), new Vector2(0f, 0f), Vector2.zero, new Vector2(0f, 90f));

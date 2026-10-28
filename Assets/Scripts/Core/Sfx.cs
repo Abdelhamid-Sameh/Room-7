@@ -71,6 +71,7 @@ public static class Sfx
         else if (i is SafeBox) return;   // plays its own sounds
         else if (i is ArtifactPickup) k = SfxKind.Pickup;
         else if (i is FuseBox) return;   // plays its own sounds
+        else if (i is LimboDoor || i is GameBoyConsole) return;   // so do these
         else if (i is Locker) k = ((Locker)i).IsOpen ? SfxKind.LockerOpen : SfxKind.LockerClose;
         Play(k);
     }
