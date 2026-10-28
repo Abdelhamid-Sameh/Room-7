@@ -33,12 +33,11 @@ public class GameBoyConsole : Interactable
     [SerializeField] private AudioClip crashSound;
     [Tooltip("Out of the maze.")]
     [SerializeField] private AudioClip winSound;
-    [Tooltip("Loops while someone is playing.")]
-    [SerializeField] private AudioClip musicLoop;
-    [Tooltip("Loops all the time: the console humming to itself in the dark room.")]
-    [SerializeField] private AudioClip humLoop;
-    [Range(0f, 1f)] [SerializeField] private float musicVolume = 0.5f;
-    [Range(0f, 1f)] [SerializeField] private float humVolume = 0.4f;
+    [Tooltip("Plays all the time, coming out of the console (spatial: you hear it through the wall too).")]
+    [SerializeField] private AudioClip musicClip;
+    [Range(0f, 1f)] [SerializeField] private float musicVolume = 0.6f;
+    [Tooltip("The music pauses while the crash / win sound plays, and this scales the win sound.")]
+    [Range(0f, 1f)] [SerializeField] private float winVolume = 0.5f;
 
     [Header("Game")]
     [Tooltip("Seconds per step. Lower = faster.")]
@@ -47,7 +46,7 @@ public class GameBoyConsole : Interactable
     private SnakeMazeGame game;
     private Texture2D tex;
     private Color32[] pixels;
-    private AudioSource music, hum;
+    private AudioSource musicSrc;
     private MonoBehaviour player;
     private float stepTimer, nextDraw, deadUntil;
     private bool busy, flashing;
@@ -74,17 +73,18 @@ public class GameBoyConsole : Interactable
         game.OnEat += () => { if (eatSound != null) AudioLevels.PlaySfx(eatSound, transform.position); };
         game.OnCrash += () =>
         {
+            musicSrc.Pause();
             if (crashSound != null) AudioLevels.PlaySfx(crashSound, transform.position);
             deadUntil = Time.time + 0.9f;
         };
         game.OnWin += () =>
         {
-            if (winSound != null) AudioLevels.PlaySfx(winSound, transform.position);
+            musicSrc.Pause();
+            if (winSound != null) AudioLevels.PlaySfx(winSound, transform.position, winVolume);
             StartCoroutine(Win());
         };
 
-        music = NewSource("Music", false, musicLoop);
-        hum = NewSource("Hum", true, humLoop);
+        musicSrc = NewSource("Music", true, musicClip);
     }
 
     private AudioSource NewSource(string n, bool spatial, AudioClip clip)
@@ -96,27 +96,25 @@ public class GameBoyConsole : Interactable
         s.loop = true;
         s.playOnAwake = false;
         s.spatialBlend = spatial ? 1f : 0f;
-        if (spatial) { s.minDistance = 2f; s.maxDistance = 16f; }
+        if (spatial) { s.minDistance = 3f; s.maxDistance = 25f; }
         return s;
     }
 
-    private void Start()
+    private IEnumerator Start()
     {
         if (closeUp != null) closeUp.Priority.Value = 0;
         Camera cam = Camera.main;
         CinemachineBrain brain = cam != null ? cam.GetComponent<CinemachineBrain>() : null;
         if (brain != null) brain.DefaultBlend = new CinemachineBlendDefinition(CinemachineBlendDefinition.Styles.EaseInOut, 0.9f);
 
-        if (!GameState.Limbo) { GameState.Limbo = true; GameState.LimboLit = true; GameState.RaiseChanged(); }   // pressed Play in this scene from the editor
-        if (hum.clip != null) hum.Play();
         Redraw();
-        PhoneUI.GameBoyRoomEntered();
+        while (!GameState.LimboLit) yield return null;   // nothing plays in the dark
+        if (musicSrc.clip != null) musicSrc.Play();
     }
 
     private void Update()
     {
-        hum.volume = humVolume * AudioLevels.SfxVolume;
-        music.volume = musicVolume * AudioLevels.MusicVolume;
+        musicSrc.volume = musicVolume * AudioLevels.MusicVolume;
 
         if (Playing && !game.Won)
         {
@@ -126,7 +124,7 @@ public class GameBoyConsole : Interactable
                 stepTimer += Time.deltaTime;
                 while (stepTimer >= stepSeconds) { stepTimer -= stepSeconds; game.Step(); }
             }
-            else if (game.Dead && Time.time >= deadUntil) { game.Reset(); stepTimer = 0f; }
+            else if (game.Dead && Time.time >= deadUntil) { game.Reset(); stepTimer = 0f; musicSrc.UnPause(); }
         }
 
         if (Time.time >= nextDraw) Redraw();
@@ -165,7 +163,6 @@ public class GameBoyConsole : Interactable
         if (player != null) player.enabled = false;
         if (closeUp != null) closeUp.Priority.Value = 50;
         if (powerOnSound != null) AudioLevels.PlaySfx(powerOnSound, transform.position);
-        if (music.clip != null) music.Play();
     }
 
     private IEnumerator Win()
@@ -184,10 +181,10 @@ public class GameBoyConsole : Interactable
         Playing = false;
         ClosedFrame = Time.frameCount;
         busy = true;
-        music.Stop();
         if (closeUp != null) closeUp.Priority.Value = 0;
 
         yield return new WaitForSeconds(0.9f);
+        musicSrc.UnPause();
         PauseMenu.ClearStaleInput();
         if (player != null) player.enabled = true;
         player = null;

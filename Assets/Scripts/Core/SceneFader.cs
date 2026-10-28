@@ -60,7 +60,7 @@ public class SceneFader : MonoBehaviour
     }
 
     /// <summary>
-    /// The lights cut out: the screen is black at once (no LOADING text), the scene loads behind it, a riser plays
+    /// The lights cut out: the screen snaps to black (no LOADING text), the scene loads behind it, a riser plays
     /// in the dark and then the lights flicker back on. 'onLit' runs the moment they do.
     /// </summary>
     public void LoadFromBlackout(string sceneName, string spawnId, AudioClip riser, System.Action onLit)
@@ -79,8 +79,14 @@ public class SceneFader : MonoBehaviour
         busy = true;
         try
         {
-            group.alpha = 1f;
             if (loadingText != null) loadingText.alpha = 0f;
+            // the lights die: a quick snap to black on screen (the scene switch happens behind it)
+            for (float f = 0f; f < 0.35f; f += Time.unscaledDeltaTime)
+            {
+                group.alpha = Mathf.Max(group.alpha, f / 0.35f);
+                yield return null;
+            }
+            group.alpha = 1f;
             GameState.LastSpawnId = spawnId;
 
             float hold = riser != null ? Mathf.Clamp(riser.length - 0.4f, 2.5f, 12f) : 3f;

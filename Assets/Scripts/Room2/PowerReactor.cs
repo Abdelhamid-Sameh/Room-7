@@ -59,6 +59,15 @@ public class PowerReactor : MonoBehaviour
         Apply(on ? 1f : 0f);
     }
 
+    // Hidden mid-flicker (the corridor is hidden when you leave Room 2 fast) the coroutine dies on a half-lit step: settle on the real state when shown again.
+    private void OnEnable()
+    {
+        if (!started) return;
+        StopAllCoroutines();
+        on = !GameState.PowerOut;
+        Apply(on ? 1f : 0f);
+    }
+
     private void Update()
     {
         bool want = !GameState.PowerOut;

@@ -98,6 +98,8 @@ public class GameSystems : MonoBehaviour
         GameObject canvasGO = NewCanvas("Fader", 900);
 
         GameObject imageGO = NewRect("FadeImage", canvasGO.transform);
+        RectTransform ir = (RectTransform)imageGO.transform;   // cover the whole screen
+        ir.anchorMin = Vector2.zero; ir.anchorMax = Vector2.one; ir.offsetMin = ir.offsetMax = Vector2.zero;
         UnityEngine.UI.Image image = imageGO.AddComponent<UnityEngine.UI.Image>();
         image.color = Color.black;
         image.raycastTarget = false;

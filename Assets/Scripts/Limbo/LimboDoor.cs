@@ -3,7 +3,7 @@ using UnityEngine;
 
 /// <summary>
 /// A door in the strange corridor. Sits on the hinge pivot (the leaf, with the collider, is its child). E swings it
-/// open away from the player, then the next scene loads - these doors only ever lead forward.
+/// open away from the player. With a target scene that loads next; with none (the Game Boy room is in the same scene) it just stays open.
 /// </summary>
 public class LimboDoor : Interactable
 {
@@ -14,6 +14,8 @@ public class LimboDoor : Interactable
     [SerializeField] private AudioClip openClip;
 
     private bool busy;
+
+    public bool Opened { get; private set; }
 
     public override string Prompt { get { return "Open the door"; } }
     public override bool CanInteract { get { return !busy; } }
@@ -35,6 +37,8 @@ public class LimboDoor : Interactable
             yield return null;
         }
         transform.localRotation = Quaternion.Euler(0f, openAngle, 0f);
+        Opened = true;
+        if (string.IsNullOrEmpty(targetScene)) yield break;
         yield return new WaitForSeconds(0.3f);
 
         if (GameSystems.HasInstance) GameSystems.Instance.Fader.LoadScene(targetScene, spawnId);

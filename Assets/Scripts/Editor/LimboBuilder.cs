@@ -8,20 +8,21 @@ using UnityEngine.SceneManagement;
 /// <summary>
 /// Builds the two scenes of the strange place Nabil is dragged to after Room 3:
 ///   Limbo_Corridor - a narrow, dim tiled corridor with one door at the end (whispers, flickering bulbs);
-///   Limbo_GameBoy  - a child's bedroom at night, a huge red Game Boy playing a snake maze, a door in its side.
+///   the Game Boy room  - (built into the same scene, past the door) a child's bedroom at night, a huge red Game Boy playing a snake maze, a door in its side.
 /// Re-running rebuilds everything except the player / spawn / game-systems objects.
 /// </summary>
 public static class LimboBuilder
 {
     const string CorridorPath = "Assets/Scenes/Limbo_Corridor.unity";
     const string RoomPath = "Assets/Scenes/Limbo_GameBoy.unity";
+    const string DoorOpenClip = "Assets/Free Wood Door Pack/Audio/Door_Open.wav";
     const string WhisperClip = "Assets/Audio/Sounds/whispering.mp3";
     const string TilePath = "Assets/Textures/Generated/BathroomTile.png";
 
     [MenuItem("Room Seven/Build Limbo scenes")]
     public static void BuildAll()
     {
-        Debug.Log(BuildCorridor() + " / " + BuildGameBoyRoom());
+        Debug.Log(BuildCorridor());
     }
 
     // ------------------------------------------------------------------ shared --
@@ -140,8 +141,7 @@ public static class LimboBuilder
         Box("Frame_L", shell, new Vector3(-0.53f, 1.05f, 13.0f), new Vector3(0.06f, 2.1f, 0.14f), trim, false);
         Box("Frame_R", shell, new Vector3(0.53f, 1.05f, 13.0f), new Vector3(0.06f, 2.1f, 0.14f), trim, false);
         Box("Frame_Top", shell, new Vector3(0f, 2.13f, 13.0f), new Vector3(1.12f, 0.06f, 0.14f), trim, false);
-        Box("Void_Behind_Door", shell, new Vector3(0f, 1.2f, 13.9f), new Vector3(1.2f, 2.4f, 1.5f), black, false);
-
+        
         // the door: hinge on the right-hand edge, leaf swings away from the player
         GameObject hinge = new GameObject("Door_Hinge");
         hinge.transform.SetParent(props, false);
@@ -152,11 +152,8 @@ public static class LimboBuilder
         handle.transform.localPosition = new Vector3(-0.41f, -0.04f, -0.9f);
         handle.transform.localScale = new Vector3(0.12f, 0.04f, 1.3f);
         LimboDoor door = hinge.AddComponent<LimboDoor>();
-        Set(door, so =>
-        {
-            so.FindProperty("targetScene").stringValue = "Limbo_GameBoy";
-            so.FindProperty("spawnId").stringValue = "Limbo_Start";
-        });
+        // no target scene: the door opens onto the Game Boy room, which is built into this same scene
+        Set(door, so => so.FindProperty("openClip").objectReferenceValue = AssetDatabase.LoadAssetAtPath<AudioClip>(DoorOpenClip));
 
         // two pipes along the ceiling
         Prim(PrimitiveType.Cylinder, "Pipe_A", props, new Vector3(-0.6f, 2.38f, 6.5f), new Vector3(0.07f, 6.55f, 0.07f), new Vector3(90f, 0f, 0f), trim);
@@ -181,6 +178,7 @@ public static class LimboBuilder
             });
         }
         PointLight("DoorGlow", lighting, new Vector3(0f, 1.4f, 12.4f), new Color(0.4f, 0.5f, 0.9f), 0.5f, 3f);
+        Transform roomLighting = BuildGameBoyContent();
 
         // the whispers: start when the lights do, stop when this scene goes
         GameObject wh = new GameObject("Whispers");
@@ -189,7 +187,12 @@ public static class LimboBuilder
         src.clip = AssetDatabase.LoadAssetAtPath<AudioClip>(WhisperClip);
         src.loop = true; src.playOnAwake = false; src.spatialBlend = 0f;
         LimboCorridor lc = wh.AddComponent<LimboCorridor>();
-        Set(lc, so => so.FindProperty("whisper").objectReferenceValue = src);
+        Set(lc, so =>
+        {
+            so.FindProperty("whisper").objectReferenceValue = src;
+            so.FindProperty("door").objectReferenceValue = door;
+            so.FindProperty("roomLights").objectReferenceValue = roomLighting.gameObject;
+        });
 
         RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
         RenderSettings.ambientLight = new Color(0.03f, 0.035f, 0.03f);
@@ -206,10 +209,8 @@ public static class LimboBuilder
 
     // ----------------------------------------------------------- game boy room --
 
-    public static string BuildGameBoyRoom()
+    static Transform BuildGameBoyContent()
     {
-        Scene sc = Prepare(RoomPath);
-
         Transform root = new GameObject("Limbo_GameBoy_Root").transform;
         Transform shell = RoomKit.Group("Shell", root).transform;
         Transform lighting = RoomKit.Group("Lighting", root).transform;
@@ -227,16 +228,21 @@ public static class LimboBuilder
         // ---- the room: 9.6 wide, 9.6 deep, 4.2 high ----
         Box("Floor", shell, new Vector3(0f, -0.05f, 4.8f), new Vector3(9.8f, 0.1f, 9.8f), carpet);
         Box("Ceiling", shell, new Vector3(0f, 4.25f, 4.8f), new Vector3(9.8f, 0.1f, 9.8f), ceilMat);
-        Box("Wall_South", shell, new Vector3(0f, 2.1f, -0.05f), new Vector3(9.8f, 4.2f, 0.1f), wallMat);
+        // the south wall is the corridor's end wall: a doorway 1.8 wide (the corridor's own door sits in it), open above 2.5 m
+        Box("Wall_South_L", shell, new Vector3(-2.9f, 2.1f, -0.05f), new Vector3(4f, 4.2f, 0.1f), wallMat);
+        Box("Wall_South_R", shell, new Vector3(2.9f, 2.1f, -0.05f), new Vector3(4f, 4.2f, 0.1f), wallMat);
+        Box("Wall_South_Top", shell, new Vector3(0f, 3.4f, -0.05f), new Vector3(1.8f, 1.6f, 0.1f), wallMat);
         Box("Wall_North", shell, new Vector3(0f, 2.1f, 9.65f), new Vector3(9.8f, 4.2f, 0.1f), wallMat);
         Box("Wall_West", shell, new Vector3(-4.85f, 2.1f, 4.8f), new Vector3(0.1f, 4.2f, 9.8f), wallMat);
         Box("Wall_East", shell, new Vector3(4.85f, 2.1f, 4.8f), new Vector3(0.1f, 4.2f, 9.8f), wallMat);
         // wainscot and a pale stripe above it, all the way round
-        Box("Wains_S", shell, new Vector3(0f, 0.55f, 0.025f), new Vector3(9.6f, 1.1f, 0.05f), wains, false);
+        Box("Wains_S_L", shell, new Vector3(-2.65f, 0.55f, 0.025f), new Vector3(4.3f, 1.1f, 0.05f), wains, false);
+        Box("Wains_S_R", shell, new Vector3(2.65f, 0.55f, 0.025f), new Vector3(4.3f, 1.1f, 0.05f), wains, false);
         Box("Wains_N", shell, new Vector3(0f, 0.55f, 9.575f), new Vector3(9.6f, 1.1f, 0.05f), wains, false);
         Box("Wains_W", shell, new Vector3(-4.775f, 0.55f, 4.8f), new Vector3(0.05f, 1.1f, 9.6f), wains, false);
         Box("Wains_E", shell, new Vector3(4.775f, 0.55f, 4.8f), new Vector3(0.05f, 1.1f, 9.6f), wains, false);
-        Box("Stripe_S", shell, new Vector3(0f, 1.14f, 0.03f), new Vector3(9.6f, 0.05f, 0.06f), stripe, false);
+        Box("Stripe_S_L", shell, new Vector3(-2.65f, 1.14f, 0.03f), new Vector3(4.3f, 0.05f, 0.06f), stripe, false);
+        Box("Stripe_S_R", shell, new Vector3(2.65f, 1.14f, 0.03f), new Vector3(4.3f, 0.05f, 0.06f), stripe, false);
         Box("Stripe_N", shell, new Vector3(0f, 1.14f, 9.57f), new Vector3(9.6f, 0.05f, 0.06f), stripe, false);
         Box("Stripe_W", shell, new Vector3(-4.77f, 1.14f, 4.8f), new Vector3(0.06f, 0.05f, 9.6f), stripe, false);
         Box("Stripe_E", shell, new Vector3(4.77f, 1.14f, 4.8f), new Vector3(0.06f, 0.05f, 9.6f), stripe, false);
@@ -252,11 +258,6 @@ public static class LimboBuilder
             Object.DestroyImmediate(q.GetComponent<Collider>());
         }
 
-        // the door Nabil came through: shut now, and not for opening
-        Box("Entry_Leaf", props, new Vector3(0f, 1.05f, 0.06f), new Vector3(1.0f, 2.1f, 0.06f), doorMat);
-        Box("Entry_Frame_L", props, new Vector3(-0.56f, 1.08f, 0.07f), new Vector3(0.08f, 2.16f, 0.1f), trim, false);
-        Box("Entry_Frame_R", props, new Vector3(0.56f, 1.08f, 0.07f), new Vector3(0.08f, 2.16f, 0.1f), trim, false);
-        Box("Entry_Frame_T", props, new Vector3(0f, 2.14f, 0.07f), new Vector3(1.2f, 0.08f, 0.1f), trim, false);
 
         // rug, toy blocks, a ball, a lamp in the corner
         Material rugA = M("RugRed", new Color(0.45f, 0.08f, 0.14f), 0.05f);
@@ -306,6 +307,7 @@ public static class LimboBuilder
         gbHandle.transform.localPosition = new Vector3(1.1f, 0f, 0.36f);
         gbHandle.transform.localScale = new Vector3(1.6f, 0.15f, 0.06f);
         GameBoyDoor gbDoor = gbHinge.AddComponent<GameBoyDoor>();
+        Set(gbDoor, so => so.FindProperty("openSound").objectReferenceValue = AssetDatabase.LoadAssetAtPath<AudioClip>(DoorOpenClip));   // same door sound as the hotel's
 
         // inside: a circuit board floor, a few chips, a green glow
         GameObject board = RoomKit.Quad("PCB", gb, new Vector3(0f, 0.012f, 8.5f), Quaternion.Euler(90f, 0f, 0f), new Vector2(2.2f, 1.4f), pcb);
@@ -364,20 +366,16 @@ public static class LimboBuilder
             so.FindProperty("screen").objectReferenceValue = screen.GetComponent<Renderer>();
             so.FindProperty("closeUp").objectReferenceValue = vcam;
             so.FindProperty("door").objectReferenceValue = gbDoor;
+            so.FindProperty("eatSound").objectReferenceValue = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/gameboy/pluck.mp3");
+            so.FindProperty("crashSound").objectReferenceValue = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/gameboy/dead.mp3");
+            so.FindProperty("winSound").objectReferenceValue = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/gameboy/win.mp3");
+            so.FindProperty("musicClip").objectReferenceValue = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/gameboy/music.mp3");
         });
         PointLight("Screen_Glow", lighting, new Vector3(0f, 2.5f, 7.0f), new Color(0.6f, 1f, 0.5f), 3f, 8f);
 
-        RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
-        RenderSettings.ambientLight = new Color(0.035f, 0.04f, 0.07f);
-        RenderSettings.ambientIntensity = 1f;
-        RenderSettings.reflectionIntensity = 0.05f;
-        RenderSettings.fog = true;
-        RenderSettings.fogMode = FogMode.ExponentialSquared;
-        RenderSettings.fogColor = new Color(0.02f, 0.03f, 0.07f);
-        RenderSettings.fogDensity = 0.025f;
-
-        Finish(sc, RoomPath, new Vector3(0f, 0f, 1.2f), Quaternion.identity);
-        return "built Limbo_GameBoy";
+        root.position = new Vector3(0f, 0f, 13.1f);   // against the corridor's end wall
+        lighting.gameObject.SetActive(false);          // LimboCorridor switches it on when the door opens
+        return lighting;
     }
 
     static void NoShadow(GameObject g)
