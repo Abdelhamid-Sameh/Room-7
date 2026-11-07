@@ -303,7 +303,7 @@ public class PhoneUI : MonoBehaviour
     {
         GameState.UnknownGameBoyTexted = true;
         yield return Wait(8f);
-        yield return SayTo(Unknown, false, "هديتك رمتها", 0.5f);
+        yield return SayTo(Unknown, false, "ملك رمت هديتك", 0.5f);
         yield return SayTo(Unknown, true, "كذب", 1.2f);
         yield return SayTo(Unknown, true, "عمرها ما تعمل كده", 1.2f);
         yield return SayTo(Unknown, false, "متعرفش الزمن ممكن يغير الواحد ازاى", 2.0f);

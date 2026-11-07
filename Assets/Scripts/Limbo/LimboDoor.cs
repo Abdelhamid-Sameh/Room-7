@@ -16,12 +16,16 @@ public class LimboDoor : Interactable
     private bool busy;
 
     public bool Opened { get; private set; }
+    [Tooltip("Shut until something unlocks it (the mirror room's exit).")]
+    public bool Locked;
 
-    public override string Prompt { get { return "Open the door"; } }
+    public override string Prompt { get { return Locked ? "Locked" : "Open the door"; } }
+    public override string KeyHint { get { return Locked ? "" : "E"; } }
     public override bool CanInteract { get { return !busy; } }
 
     public override void Interact(PlayerInteraction interactor)
     {
+        if (Locked) { Sfx.Play(SfxKind.Click); return; }
         if (!busy) StartCoroutine(Open());
     }
 

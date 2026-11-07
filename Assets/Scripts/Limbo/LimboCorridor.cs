@@ -18,6 +18,8 @@ public class LimboCorridor : MonoBehaviour
     [Tooltip("Walking from z=From to z=To fades corridor into room.")]
     [SerializeField] private float blendFromZ = 12.6f, blendToZ = 14.6f;
     [SerializeField] private float enteredZ = 13.3f;
+    [Tooltip("Once Nabil is in the mirror room it owns the fog and ambient.")]
+    [SerializeField] private MirrorRoom mirror;
 
     private static readonly Color CorridorFog = new Color(0.02f, 0.025f, 0.02f), RoomFog = new Color(0.02f, 0.03f, 0.07f);
     private static readonly Color CorridorAmbient = new Color(0.03f, 0.035f, 0.03f), RoomAmbient = new Color(0.035f, 0.04f, 0.07f);
@@ -59,9 +61,12 @@ public class LimboCorridor : MonoBehaviour
             if (!inRoom && player.position.z > enteredZ) { inRoom = true; PhoneUI.GameBoyRoomEntered(); }
         }
 
-        RenderSettings.fogColor = Color.Lerp(CorridorFog, RoomFog, k);
-        RenderSettings.fogDensity = Mathf.Lerp(CorridorDensity, RoomDensity, k);
-        RenderSettings.ambientLight = Color.Lerp(CorridorAmbient, RoomAmbient, k);
+        if (mirror == null || mirror.Blend <= 0f)
+        {
+            RenderSettings.fogColor = Color.Lerp(CorridorFog, RoomFog, k);
+            RenderSettings.fogDensity = Mathf.Lerp(CorridorDensity, RoomDensity, k);
+            RenderSettings.ambientLight = Color.Lerp(CorridorAmbient, RoomAmbient, k);
+        }
 
         if (whisper != null)
         {

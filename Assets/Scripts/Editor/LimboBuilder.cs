@@ -179,6 +179,7 @@ public static class LimboBuilder
         }
         PointLight("DoorGlow", lighting, new Vector3(0f, 1.4f, 12.4f), new Color(0.4f, 0.5f, 0.9f), 0.5f, 3f);
         Transform roomLighting = BuildGameBoyContent();
+        MirrorRoom mirrorRoom = MirrorRoomBuilder.Build(roomLighting.gameObject);
 
         // the whispers: start when the lights do, stop when this scene goes
         GameObject wh = new GameObject("Whispers");
@@ -192,6 +193,7 @@ public static class LimboBuilder
             so.FindProperty("whisper").objectReferenceValue = src;
             so.FindProperty("door").objectReferenceValue = door;
             so.FindProperty("roomLights").objectReferenceValue = roomLighting.gameObject;
+            so.FindProperty("mirror").objectReferenceValue = mirrorRoom;
         });
 
         RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
@@ -232,18 +234,26 @@ public static class LimboBuilder
         Box("Wall_South_L", shell, new Vector3(-2.9f, 2.1f, -0.05f), new Vector3(4f, 4.2f, 0.1f), wallMat);
         Box("Wall_South_R", shell, new Vector3(2.9f, 2.1f, -0.05f), new Vector3(4f, 4.2f, 0.1f), wallMat);
         Box("Wall_South_Top", shell, new Vector3(0f, 3.4f, -0.05f), new Vector3(1.8f, 1.6f, 0.1f), wallMat);
-        Box("Wall_North", shell, new Vector3(0f, 2.1f, 9.65f), new Vector3(9.8f, 4.2f, 0.1f), wallMat);
+        // ... and one in the north wall behind it, with a little passage joining the two
+        Box("Wall_North_L", shell, new Vector3(-2.675f, 2.1f, 9.65f), new Vector3(4.45f, 4.2f, 0.1f), wallMat);
+        Box("Wall_North_R", shell, new Vector3(2.675f, 2.1f, 9.65f), new Vector3(4.45f, 4.2f, 0.1f), wallMat);
+        Box("Wall_North_Top", shell, new Vector3(0f, 3.15f, 9.65f), new Vector3(0.9f, 2.1f, 0.1f), wallMat);
+        Box("Passage_L", shell, new Vector3(-0.5f, 1.05f, 9.45f), new Vector3(0.1f, 2.1f, 0.3f), M("GBDark", new Color(0.09f, 0.09f, 0.11f), 0.3f));
+        Box("Passage_R", shell, new Vector3(0.5f, 1.05f, 9.45f), new Vector3(0.1f, 2.1f, 0.3f), M("GBDark", new Color(0.09f, 0.09f, 0.11f), 0.3f));
+        Box("Passage_Top", shell, new Vector3(0f, 2.15f, 9.45f), new Vector3(1.1f, 0.1f, 0.3f), M("GBDark", new Color(0.09f, 0.09f, 0.11f), 0.3f));
         Box("Wall_West", shell, new Vector3(-4.85f, 2.1f, 4.8f), new Vector3(0.1f, 4.2f, 9.8f), wallMat);
         Box("Wall_East", shell, new Vector3(4.85f, 2.1f, 4.8f), new Vector3(0.1f, 4.2f, 9.8f), wallMat);
         // wainscot and a pale stripe above it, all the way round
         Box("Wains_S_L", shell, new Vector3(-2.65f, 0.55f, 0.025f), new Vector3(4.3f, 1.1f, 0.05f), wains, false);
         Box("Wains_S_R", shell, new Vector3(2.65f, 0.55f, 0.025f), new Vector3(4.3f, 1.1f, 0.05f), wains, false);
-        Box("Wains_N", shell, new Vector3(0f, 0.55f, 9.575f), new Vector3(9.6f, 1.1f, 0.05f), wains, false);
+        Box("Wains_N_L", shell, new Vector3(-2.625f, 0.55f, 9.575f), new Vector3(4.35f, 1.1f, 0.05f), wains, false);
+        Box("Wains_N_R", shell, new Vector3(2.625f, 0.55f, 9.575f), new Vector3(4.35f, 1.1f, 0.05f), wains, false);
         Box("Wains_W", shell, new Vector3(-4.775f, 0.55f, 4.8f), new Vector3(0.05f, 1.1f, 9.6f), wains, false);
         Box("Wains_E", shell, new Vector3(4.775f, 0.55f, 4.8f), new Vector3(0.05f, 1.1f, 9.6f), wains, false);
         Box("Stripe_S_L", shell, new Vector3(-2.65f, 1.14f, 0.03f), new Vector3(4.3f, 0.05f, 0.06f), stripe, false);
         Box("Stripe_S_R", shell, new Vector3(2.65f, 1.14f, 0.03f), new Vector3(4.3f, 0.05f, 0.06f), stripe, false);
-        Box("Stripe_N", shell, new Vector3(0f, 1.14f, 9.57f), new Vector3(9.6f, 0.05f, 0.06f), stripe, false);
+        Box("Stripe_N_L", shell, new Vector3(-2.625f, 1.14f, 9.57f), new Vector3(4.35f, 0.05f, 0.06f), stripe, false);
+        Box("Stripe_N_R", shell, new Vector3(2.625f, 1.14f, 9.57f), new Vector3(4.35f, 0.05f, 0.06f), stripe, false);
         Box("Stripe_W", shell, new Vector3(-4.77f, 1.14f, 4.8f), new Vector3(0.06f, 0.05f, 9.6f), stripe, false);
         Box("Stripe_E", shell, new Vector3(4.77f, 1.14f, 4.8f), new Vector3(0.06f, 0.05f, 9.6f), stripe, false);
 
@@ -285,7 +295,10 @@ public static class LimboBuilder
         Material pcb = M("GBPcb", new Color(0.05f, 0.25f, 0.12f), 0.5f);
         Material chip = M("GBChip", new Color(0.04f, 0.04f, 0.05f), 0.4f);
 
-        Box("Body_Back", gb, new Vector3(0f, 1.7f, 9.25f), new Vector3(2.4f, 3.4f, 0.1f), red);
+        // the way on: a doorway in the back of the console (0.9 wide, 2.1 high) ...
+        Box("Body_Back_L", gb, new Vector3(-0.825f, 1.7f, 9.25f), new Vector3(0.75f, 3.4f, 0.1f), red);
+        Box("Body_Back_R", gb, new Vector3(0.825f, 1.7f, 9.25f), new Vector3(0.75f, 3.4f, 0.1f), red);
+        Box("Body_Back_Top", gb, new Vector3(0f, 2.75f, 9.25f), new Vector3(0.9f, 1.3f, 0.1f), red);
         Box("Body_Left", gb, new Vector3(-1.15f, 1.7f, 8.5f), new Vector3(0.1f, 3.4f, 1.6f), red);
         Box("Body_Top", gb, new Vector3(0f, 3.35f, 8.5f), new Vector3(2.4f, 0.1f, 1.6f), red);
         Box("Body_Front", gb, new Vector3(0f, 1.7f, 7.75f), new Vector3(2.4f, 3.4f, 0.1f), red);
