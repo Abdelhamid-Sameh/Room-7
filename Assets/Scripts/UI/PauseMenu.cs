@@ -127,7 +127,8 @@ public class PauseMenu : MonoBehaviour
         pages[0] = NewPage("MenuPage", parent);
         TMP_Text l;
         NewButton(pages[0].transform, "Resume", -90f, Resume, Vector2.zero, new Vector2(360f, 56f), 26, out l);
-        NewButton(pages[0].transform, "Quit", -170f, Quit, Vector2.zero, new Vector2(360f, 56f), 26, out l);
+        NewButton(pages[0].transform, "Main menu", -170f, MainMenu.GoToMenu, Vector2.zero, new Vector2(360f, 56f), 26, out l);
+        NewButton(pages[0].transform, "Quit", -250f, Quit, Vector2.zero, new Vector2(360f, 56f), 26, out l);
     }
 
     private void BuildCluesPage(Transform parent)

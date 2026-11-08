@@ -8,10 +8,10 @@ using UnityEngine;
 public static class Room2Builder
 {
     const float H = 2.9f, T = 0.2f, DoorW = 1.16f, DoorH = 2.2f;
-    const string WallTex = "Assets/YughuesFreeFabricMaterials/Textures/T_YFFaM_Burlap01_d.tga";
-    const string CeilTex = "Assets/YughuesFreeFabricMaterials/Textures/T_YFFaM_Burlap02_d.tga";
-    const string CarpetTex = "Assets/YughuesFreeFabricMaterials/Textures/T_YFFaM_Carpet02_d.tga";
-    const string DoorPrefab = "Assets/Free Wood Door Pack/Prefab/Wood/Door_4/Door_4_Brown.prefab";
+    const string WallTex = "Assets/ThirdParty/YughuesFreeFabricMaterials/Textures/T_YFFaM_Burlap01_d.tga";
+    const string CeilTex = "Assets/ThirdParty/YughuesFreeFabricMaterials/Textures/T_YFFaM_Burlap02_d.tga";
+    const string CarpetTex = "Assets/ThirdParty/YughuesFreeFabricMaterials/Textures/T_YFFaM_Carpet02_d.tga";
+    const string DoorPrefab = "Assets/ThirdParty/Free Wood Door Pack/Prefab/Wood/Door_4/Door_4_Brown.prefab";
 
     static Transform walls, lighting, props;
     static Material wallMat0, ceilMat0, floorMat0, concrete, fixture;

@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-public enum SfxKind { Click, Tidy, Paper, Pickup, Switch, LockerOpen, LockerClose, SwitchOff, Wipe, Ping, Send, Tab, PowerDown, Fuse, PowerOn, Door, Keypad, SafeOpen, SafeClose }
+public enum SfxKind { Click, Tidy, Paper, Pickup, Switch, LockerOpen, LockerClose, SwitchOff, Wipe, Ping, Send, Tab, PowerDown, Fuse, PowerOn, Door, Keypad, SafeOpen, SafeClose, Hover }
 
 /// <summary>
 /// Interaction sound effects. A kind plays the recording at Assets/Resources/Sfx/&lt;Name&gt; when one exists
@@ -112,6 +112,7 @@ public static class Sfx
         {
             case SfxKind.Click: return Make("sfx_click", 0.06f, t => Sin(1400f, t) * Mathf.Exp(-t * 70f) * 0.5f);
             case SfxKind.Tidy:  return Make("sfx_tidy", 0.35f, t => (Sin(1568f, t) * Mathf.Exp(-t * 14f) + 0.3f * Sin(3136f, t) * Mathf.Exp(-t * 22f)) * 0.22f);
+            case SfxKind.Hover: return Make("sfx_hover", 0.14f, t => (Sin(310f, t) * Mathf.Exp(-t * 34f) + 0.45f * Sin(620f, t) * Mathf.Exp(-t * 55f) + 0.12f * Sin(1240f, t) * Mathf.Exp(-t * 90f)) * Mathf.Min(1f, t * 900f) * 0.6f);
             case SfxKind.Tab:   return Make("sfx_tab", 0.05f, t => Sin(1000f, t) * Mathf.Exp(-t * 90f) * 0.4f);
             case SfxKind.Send:  return Make("sfx_send", 0.2f, t => Mathf.Sin(2f * Mathf.PI * (500f * t + 1250f * t * t)) * Mathf.Sin(Mathf.PI * t / 0.2f) * 0.4f);
             default: return null;

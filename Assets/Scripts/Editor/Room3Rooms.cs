@@ -5,9 +5,9 @@ using UnityEngine;
 /// <summary>Room 3, part 2: the dressing of the two cleaning rooms (A: the religious guest, C: the chaotic one).</summary>
 public static partial class Room3Builder
 {
-    const string FM = "Assets/Furniture Mega Pack/Prefabs/";
-    const string NP = "Assets/nappin/OfficeEssentialsPack/Prefabs/";
-    const string GG = "Assets/Gogo Casual Pack/Gogo Casual Free Light Pack/Prefabs/";
+    const string FM = "Assets/ThirdParty/Furniture Mega Pack/Prefabs/";
+    const string NP = "Assets/ThirdParty/nappin/OfficeEssentialsPack/Prefabs/";
+    const string GG = "Assets/ThirdParty/Gogo Casual Pack/Gogo Casual Free Light Pack/Prefabs/";
     const string PhotoPath = "Assets/Resources/Room3/PeacePhoto.png";
 
     static Transform tidyGroup, binTarget, closetTarget;

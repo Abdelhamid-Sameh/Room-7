@@ -15,7 +15,7 @@ public static class LimboBuilder
 {
     const string CorridorPath = "Assets/Scenes/Limbo_Corridor.unity";
     const string RoomPath = "Assets/Scenes/Limbo_GameBoy.unity";
-    const string DoorOpenClip = "Assets/Free Wood Door Pack/Audio/Door_Open.wav";
+    const string DoorOpenClip = "Assets/ThirdParty/Free Wood Door Pack/Audio/Door_Open.wav";
     const string WhisperClip = "Assets/Audio/Sounds/whispering.mp3";
     const string TilePath = "Assets/Textures/Generated/BathroomTile.png";
 

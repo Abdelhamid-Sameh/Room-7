@@ -6,6 +6,9 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
+    path: Assets/Scenes/MainMenu.unity
+    guid: e41e58f67cc659740a8dfa5d00e7199e
+  - enabled: 1
     path: Assets/Scenes/HotelFloor_Corridor.unity
     guid: c609380b08127c8459da35d3959c4c0e
   - enabled: 1

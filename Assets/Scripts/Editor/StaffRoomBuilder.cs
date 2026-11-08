@@ -22,27 +22,27 @@ public static class StaffRoomBuilder
     private const string FloorMat = "Assets/Materials/RoomSeven/RS_Floor_Carpet.mat";
     private const string LampMat = "Assets/Materials/RoomSeven/RS_LightFixture_Emissive.mat";
 
-    private const string GreyMat = "Assets/nappin/OfficeEssentialsPack/Materials/(Mat)GradientGrey.mat";
-    private const string LockerBodyMat = "Assets/nappin/OfficeEssentialsPack/Materials/(Mat)GradientGrey.mat";
-    private const string LockerDoorMat = "Assets/nappin/OfficeEssentialsPack/Materials/(Mat)GradientDarkGreen.mat";
-    private const string MetalMat = "Assets/Free Wood Door Pack/Materials/Door_Knob_Material/Silver.mat";
-    private const string BlackMat = "Assets/nappin/OfficeEssentialsPack/Materials/(Mat)MetallicBlack.mat";
-    private const string BrownMat = "Assets/nappin/OfficeEssentialsPack/Materials/(Mat)GradientBrown.mat";
-    private const string BeigeMat = "Assets/nappin/OfficeEssentialsPack/Materials/(Mat)GradientBeige.mat";
-    private const string RedMat = "Assets/nappin/OfficeEssentialsPack/Materials/(Mat)GradientRed.mat";
-    private const string GreenMat = "Assets/nappin/OfficeEssentialsPack/Materials/(Mat)GradientDarkGreen.mat";
+    private const string GreyMat = "Assets/ThirdParty/nappin/OfficeEssentialsPack/Materials/(Mat)GradientGrey.mat";
+    private const string LockerBodyMat = "Assets/ThirdParty/nappin/OfficeEssentialsPack/Materials/(Mat)GradientGrey.mat";
+    private const string LockerDoorMat = "Assets/ThirdParty/nappin/OfficeEssentialsPack/Materials/(Mat)GradientDarkGreen.mat";
+    private const string MetalMat = "Assets/ThirdParty/Free Wood Door Pack/Materials/Door_Knob_Material/Silver.mat";
+    private const string BlackMat = "Assets/ThirdParty/nappin/OfficeEssentialsPack/Materials/(Mat)MetallicBlack.mat";
+    private const string BrownMat = "Assets/ThirdParty/nappin/OfficeEssentialsPack/Materials/(Mat)GradientBrown.mat";
+    private const string BeigeMat = "Assets/ThirdParty/nappin/OfficeEssentialsPack/Materials/(Mat)GradientBeige.mat";
+    private const string RedMat = "Assets/ThirdParty/nappin/OfficeEssentialsPack/Materials/(Mat)GradientRed.mat";
+    private const string GreenMat = "Assets/ThirdParty/nappin/OfficeEssentialsPack/Materials/(Mat)GradientDarkGreen.mat";
 
-    private const string OfficePack = "Assets/nappin/OfficeEssentialsPack/Prefabs/";
-    private const string ExitDoorPrefab = "Assets/Free Wood Door Pack/Prefab/Wood/Door_4/Door_4_Brown.prefab";
+    private const string OfficePack = "Assets/ThirdParty/nappin/OfficeEssentialsPack/Prefabs/";
+    private const string ExitDoorPrefab = "Assets/ThirdParty/Free Wood Door Pack/Prefab/Wood/Door_4/Door_4_Brown.prefab";
     private const string FoldedShirtPrefab = "Assets/Models/Folded shirt/source/simple folded shirt.obj";
-    private const string RadioPrefab = "Assets/AK STUDIO ART/Radio/Prefabs/Radio.prefab";
+    private const string RadioPrefab = "Assets/ThirdParty/AK STUDIO ART/Radio/Prefabs/Radio.prefab";
     private const string CleaningCartSource = "Assets/Models/Cleaning cart/source/Cleaning_Cart.fbx";
 
     /// <summary>Folded shirt is authored 2 m across - 0.15 makes it 0.30 m, sized to fit a real locker.</summary>
     private const float ShirtScale = 0.15f;
 
     // ------------------------------------------------ real locker (Low-Poly 3D Lockers)
-    private const string RealLockerSource = "Assets/Low-Poly 3D Lockers/Low-Poly 3D Lockers/Mesh/M.C.C.fbx";
+    private const string RealLockerSource = "Assets/ThirdParty/Low-Poly 3D Lockers/Low-Poly 3D Lockers/Mesh/M.C.C.fbx";
     private const string SplitDir = "Assets/Models/Lockers";
 
     /// <summary>

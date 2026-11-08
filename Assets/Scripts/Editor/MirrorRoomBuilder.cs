@@ -185,7 +185,7 @@ public static class MirrorRoomBuilder
         blockers.Add(sb.GetComponent<Collider>());
 
         // the life he drew for himself: the antique set (URP copies of the package's materials)
-        string lp = "Assets/LouisPhilippeAntiqueFurniture/";
+        string lp = "Assets/ThirdParty/LouisPhilippeAntiqueFurniture/";
         Material chairM = ModelMat("LP_Chair", lp + "texmap/LouisPhilippe_chair_AlbedoTransparency.png", lp + "texmap/LouisPhilippe_chair_Normal.png", null, 0.5f, 0.1f);
         Material chairP = ModelMat("LP_ChairPillow", lp + "texmap/LouisPhilippe_pillow chair_AlbedoTransparency.png", lp + "texmap/LouisPhilippe_pillow chair_Normal.png", null, 0.4f, 0f);
         Material tableM = ModelMat("LP_Table", lp + "texmap/LouisPhilippe_table_AlbedoTransparency.png", lp + "texmap/LouisPhilippe_table_Normal.png", null, 0.55f, 0.1f);
@@ -216,7 +216,7 @@ public static class MirrorRoomBuilder
         string cartDir = "Assets/Models/Cleaning cart/";
         Material cartMat = ModelMat("Cart", cartDir + "textures/Cleaning_Cart_Unwrapped_Cleaning_Cart_Base.png", cartDir + "textures/Cleaning_Cart_Unwrapped_Cleaning_Cart_Norm.png", null, 0.45f, 0.5f);
         Place(cartDir + "source/Cleaning_Cart.fbx", props, new Vector3(2.25f, 0f, 4.0f), 90f, 1.25f, cartMat, "Cart_You", -90f);
-        string lockerPrefab = "Assets/Low-Poly 3D Lockers/Low-Poly 3D Lockers/Prefabs/M.C.C.prefab";
+        string lockerPrefab = "Assets/ThirdParty/Low-Poly 3D Lockers/Low-Poly 3D Lockers/Prefabs/M.C.C.prefab";
         for (int li = 0; li < 2; li++) Place(lockerPrefab, props, new Vector3(-2.75f, 0f, 1.05f + li * 0.52f), 90f, 1.99f, null, "Locker_You_" + li);
         // coat rail on the west wall with the uniform hanging from it
         Material steel = Plain("RailSteel", new Color(0.45f, 0.46f, 0.48f), 0.5f, 0.7f);
@@ -262,7 +262,7 @@ public static class MirrorRoomBuilder
         {
             so.FindProperty("openAngle").floatValue = 95f;
             so.FindProperty("Locked").boolValue = true;
-            so.FindProperty("openClip").objectReferenceValue = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Free Wood Door Pack/Audio/Door_Open.wav");
+            so.FindProperty("openClip").objectReferenceValue = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/ThirdParty/Free Wood Door Pack/Audio/Door_Open.wav");
         });
         Box("Exit_Void", shell, new Vector3(W + 0.75f, 1.2f, (dz0 + dz1) / 2f), new Vector3(1.2f, 2.4f, 1.4f), black, true);
         GameObject lockBox = Box("Exit_LockLight", props, new Vector3(W - 0.04f, 2.35f, (dz0 + dz1) / 2f), new Vector3(0.05f, 0.12f, 0.12f), Plain("LockLight", new Color(0.6f, 0.05f, 0.05f), 0.2f, 0f, new Color(2.2f, 0.1f, 0.1f)), false);

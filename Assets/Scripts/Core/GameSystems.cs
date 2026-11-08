@@ -31,6 +31,7 @@ public class GameSystems : MonoBehaviour
     private static void Bootstrap()
     {
         if (Instance != null) return;
+        if (SceneManager.GetActiveScene().name == MainMenu.SceneName) return;   // the menu has no HUD, phone or pause menu
 
         Debug.Log("[GameSystems] No scene copy found - creating one from code.");
         GameObject go = new GameObject("GameSystems");
