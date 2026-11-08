@@ -136,6 +136,8 @@ public static class GameState
     /// <summary>The Game Boy maze has been won.</summary>
     public static bool GameBoySolved;
     public static bool MirrorSolved;
+    public static bool HangDone;          // the hanging room has played out
+    public static bool WakeUpPending;     // the next scene opens with Nabil waking up
     /// <summary>The radio is dead in a blackout and in the strange corridor.</summary>
     public static bool RadioDead => PowerOut || Limbo;
 
@@ -233,7 +235,7 @@ public static class GameState
         R2Loops = 0;
         HasFlashlight = false; FlashlightOn = false; HasFuse = false;
         R2Done = false; R2SideOpen = false; R2Replied = false; PowerOut = false;
-        Limbo = false; LimboLit = false; UnknownTexted = false; UnknownGameBoyTexted = false; UnknownMirrorTexted = false; GameBoySolved = false; MirrorSolved = false;
+        Limbo = false; LimboLit = false; UnknownTexted = false; UnknownGameBoyTexted = false; UnknownMirrorTexted = false; GameBoySolved = false; MirrorSolved = false; HangDone = false; WakeUpPending = false;
         UnlockedTracks.Clear();
 
         DoorAngles.Clear();

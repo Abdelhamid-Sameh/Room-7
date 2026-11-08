@@ -212,7 +212,7 @@ private void BuildUi()
         for (int i = 0; i < presets.Length; i++)
         {
             Preset p = presets[i];
-            Button b = MenuButton(card.transform, p.Name, 30, new Vector2(34f, -128f - i * 64f), () => StartPreset(p));
+            Button b = MenuButton(card.transform, p.Name, 30, new Vector2(34f, -124f - i * 58f), () => StartPreset(p));
             ((RectTransform)b.transform).sizeDelta = new Vector2(430f, 56f);
             TMP_Text h = Text(b.transform, "Hint", 19, TextAlignmentOptions.Left, Dim, p.Hint);
             Place(h, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(450f, 0f), new Vector2(520f, 56f));
@@ -520,6 +520,7 @@ private void ShowPage(Page p, bool instant = false)
             new Preset { Name = "Room 3", Hint = "Four rooms, the safe", Scene = "Room03", Spawn = GameState.SpawnFromCorridor, Setup = () => { Base(); Kit(); AfterRoom2(); } },
             new Preset { Name = "Strange corridor", Hint = "After the safe: Limbo", Scene = "Limbo_Corridor", Spawn = "Limbo_Start", Setup = () => { Base(); Kit(); AfterRoom2(); Limbo(); } },
             new Preset { Name = "Game Boy room", Hint = "The red console and its maze", Scene = "Limbo_Corridor", Spawn = "Limbo_GameBoy", Setup = () => { Base(); Kit(); AfterRoom2(); Limbo(); } },
+            new Preset { Name = "Hanging room", Hint = "The corridor, the rope, the messages", Scene = "Limbo_Corridor", Spawn = "Hang_Start", Setup = () => { Base(); Kit(); AfterRoom2(); Limbo(); GameState.GameBoySolved = true; GameState.UnknownGameBoyTexted = true; GameState.MirrorSolved = true; } },
             new Preset { Name = "Mirror room", Hint = "The copy behind the glass", Scene = "Limbo_Corridor", Spawn = "Limbo_Mirror", Setup = () => { Base(); Kit(); AfterRoom2(); Limbo(); GameState.GameBoySolved = true; GameState.UnknownGameBoyTexted = true; } },
         };
     }

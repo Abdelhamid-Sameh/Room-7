@@ -262,6 +262,8 @@ public static class MirrorRoomBuilder
         {
             so.FindProperty("openAngle").floatValue = 95f;
             so.FindProperty("Locked").boolValue = true;
+            so.FindProperty("targetScene").stringValue = "Hang_Room";   // the exit leads to the hanging room
+            so.FindProperty("spawnId").stringValue = "Hang_Start";
             so.FindProperty("openClip").objectReferenceValue = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/ThirdParty/Free Wood Door Pack/Audio/Door_Open.wav");
         });
         Box("Exit_Void", shell, new Vector3(W + 0.75f, 1.2f, (dz0 + dz1) / 2f), new Vector3(1.2f, 2.4f, 1.4f), black, true);

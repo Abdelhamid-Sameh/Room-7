@@ -68,14 +68,14 @@ public static class MainMenuBuilder
             RoomKit.Box("DoorFrame" + (i + 1), r, new Vector3(x + s * 0.02f, 1.1f, zs[i]), new Vector3(0.05f, 2.2f, 1.15f), frameWood, false);
             RoomKit.Box("Door" + (i + 1), r, new Vector3(x + s * 0.05f, 1.05f, zs[i]), new Vector3(0.05f, 2.1f, 1.0f), doorWood, false);
             RoomKit.Box("Handle" + (i + 1), r, new Vector3(x + s * 0.09f, 1.0f, zs[i] + 0.38f), new Vector3(0.06f, 0.04f, 0.14f), brass, false);
-            Plate(r, (i + 1).ToString(), new Vector3(x + s * 0.085f, 1.72f, zs[i]), left ? 90f : -90f, new Color(0.7f, 0.55f, 0.3f), false);
+            Plate(r, (i + 1).ToString(), new Vector3(x + s * 0.085f, 1.72f, zs[i]), left ? -90f : 90f, new Color(0.7f, 0.55f, 0.3f), false);
         }
 
         // door 7 at the end, with the light under it
         RoomKit.Box("DoorFrame7", r, new Vector3(0f, 1.1f, L - 0.02f), new Vector3(1.15f, 2.2f, 0.05f), frameWood, false);
         RoomKit.Box("Door7", r, new Vector3(0f, 1.05f, L - 0.05f), new Vector3(1.0f, 2.1f, 0.05f), doorWood, false);
         RoomKit.Box("Handle7", r, new Vector3(0.38f, 1.0f, L - 0.09f), new Vector3(0.14f, 0.04f, 0.06f), brass, false);
-        Plate(r, "7", new Vector3(0f, 1.78f, L - 0.085f), 180f, new Color(1f, 0.72f, 0.3f), true);
+        Plate(r, "7", new Vector3(0f, 1.78f, L - 0.085f), 0f, new Color(1f, 0.72f, 0.3f), true);
 
         Material strip = RoomKit.Plain("Menu_DoorLight", new Color(1f, 0.75f, 0.35f), 0.2f, 0f, new Color(1f, 0.7f, 0.3f) * 3.2f);
         GameObject stripGo = RoomKit.Box("DoorLight", r, new Vector3(0f, 0.012f, L - 0.3f), new Vector3(0.95f, 0.012f, 0.5f), strip, false);
