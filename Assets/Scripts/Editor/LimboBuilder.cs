@@ -197,13 +197,13 @@ public static class LimboBuilder
         });
 
         RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
-        RenderSettings.ambientLight = new Color(0.03f, 0.035f, 0.03f);
+        RenderSettings.ambientLight = new Color(0.09f, 0.10f, 0.09f);
         RenderSettings.ambientIntensity = 1f;
         RenderSettings.reflectionIntensity = 0.05f;
         RenderSettings.fog = true;
         RenderSettings.fogMode = FogMode.ExponentialSquared;
-        RenderSettings.fogColor = new Color(0.02f, 0.025f, 0.02f);
-        RenderSettings.fogDensity = 0.09f;
+        RenderSettings.fogColor = new Color(0.04f, 0.05f, 0.04f);
+        RenderSettings.fogDensity = 0.06f;
 
         Finish(sc, CorridorPath, new Vector3(0f, 0f, 0.9f), Quaternion.identity);
         return "built Limbo_Corridor";

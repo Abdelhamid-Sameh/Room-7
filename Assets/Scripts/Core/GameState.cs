@@ -132,6 +132,7 @@ public static class GameState
     public static bool UnknownTexted;
     /// <summary>The Unknown Number's texts in the Game Boy room have played.</summary>
     public static bool UnknownGameBoyTexted;
+    public static bool UnknownMirrorTexted;
     /// <summary>The Game Boy maze has been won.</summary>
     public static bool GameBoySolved;
     public static bool MirrorSolved;
@@ -232,7 +233,7 @@ public static class GameState
         R2Loops = 0;
         HasFlashlight = false; FlashlightOn = false; HasFuse = false;
         R2Done = false; R2SideOpen = false; R2Replied = false; PowerOut = false;
-        Limbo = false; LimboLit = false; UnknownTexted = false; UnknownGameBoyTexted = false; GameBoySolved = false; MirrorSolved = false;
+        Limbo = false; LimboLit = false; UnknownTexted = false; UnknownGameBoyTexted = false; UnknownMirrorTexted = false; GameBoySolved = false; MirrorSolved = false;
         UnlockedTracks.Clear();
 
         DoorAngles.Clear();

@@ -109,11 +109,18 @@ public class GameBoyConsole : Interactable
 
         Redraw();
         while (!GameState.LimboLit) yield return null;   // nothing plays in the dark
-        if (musicSrc.clip != null) musicSrc.Play();
+        if (musicSrc.clip != null && !GameState.GameBoySolved) musicSrc.Play();
+    }
+
+    private void SilenceMusic()
+    {
+        musicSrc.Stop();
+        musicSrc.enabled = false;   // no UnPause or later Play can bring it back
     }
 
     private void Update()
     {
+        if (GameState.GameBoySolved && musicSrc.enabled) SilenceMusic();   // also covers a reloaded, already-solved scene
         musicSrc.volume = musicVolume * AudioLevels.MusicVolume;
 
         if (Playing && !game.Won)
@@ -184,7 +191,7 @@ public class GameBoyConsole : Interactable
         if (closeUp != null) closeUp.Priority.Value = 0;
 
         yield return new WaitForSeconds(0.9f);
-        musicSrc.UnPause();
+        if (!GameState.GameBoySolved) musicSrc.UnPause();
         PauseMenu.ClearStaleInput();
         if (player != null) player.enabled = true;
         player = null;

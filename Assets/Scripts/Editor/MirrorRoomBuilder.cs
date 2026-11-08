@@ -74,12 +74,12 @@ public static class MirrorRoomBuilder
     static void Set(Object o, System.Action<SerializedObject> fill) { SerializedObject so = new SerializedObject(o); fill(so); so.ApplyModifiedPropertiesWithoutUndo(); }
 
     /// <summary>Puts a model on the floor at (x,z): scaled to 'height', turned to 'yaw', bounds-centred, with a box collider.</summary>
-    static GameObject Place(string path, Transform parent, Vector3 floorPos, float yaw, float height, Material mat, string name)
+    static GameObject Place(string path, Transform parent, Vector3 floorPos, float yaw, float height, Material mat, string name, float pitch = 0f)
     {
         GameObject asset = AssetDatabase.LoadAssetAtPath<GameObject>(path);
         GameObject go = (GameObject)PrefabUtility.InstantiatePrefab(asset, parent);
         go.name = name;
-        go.transform.rotation = Quaternion.Euler(0f, yaw, 0f);
+        go.transform.rotation = Quaternion.Euler(pitch, yaw, 0f);
         go.transform.position = Vector3.zero; go.transform.localScale = Vector3.one;
         Bounds b = RoomKit.WorldBounds(go);
         go.transform.localScale = Vector3.one * (height / b.size.y);
@@ -157,16 +157,17 @@ public static class MirrorRoomBuilder
         // frame: 1.9 x 1.2 m model scaled x3 -> 5.7 x 3.6 m, centred on the wall
         GameObject frame = (GameObject)PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>(Models + "ornate-gold-vintage-frame/source/frame.glb"), props);
         frame.name = "Mirror_Frame";
-        frame.transform.position = new Vector3(0f, 2.0f, ZM);
+        float cy = 1.4f;   // lowered so the frame's bottom border no longer hides the copy side's floor and plate
+        frame.transform.position = new Vector3(0f, cy, ZM);
         frame.transform.localScale = Vector3.one * 3.0f;
         float fw = 1.9f * 3.0f, fh = 1.2f * 3.0f;
-        float fy0 = 2.0f - fh / 2f, fy1 = 2.0f + fh / 2f;
+        float fy0 = Mathf.Max(0.05f, cy - fh / 2f), fy1 = cy + fh / 2f;
         Box("Glass_Under", shell, new Vector3(0f, fy0 / 2f, ZM), new Vector3(w2 + 0.2f, fy0, 0.3f), darkWood);
         Box("Glass_Over", shell, new Vector3(0f, fy1 + (H - fy1) / 2f, ZM), new Vector3(w2 + 0.2f, H - fy1, 0.3f), darkWood);
         float sideGap = W - fw / 2f;
-        Box("Glass_Side_W", shell, new Vector3(-(W - sideGap / 2f), 2.0f, ZM), new Vector3(sideGap, fh, 0.3f), darkWood);
-        Box("Glass_Side_E", shell, new Vector3(W - sideGap / 2f, 2.0f, ZM), new Vector3(sideGap, fh, 0.3f), darkWood);
-        GameObject pane = Box("Glass", props, new Vector3(0f, 2.0f, ZM), new Vector3(fw, fh, 0.04f), Glass());
+        Box("Glass_Side_W", shell, new Vector3(-(W - sideGap / 2f), cy, ZM), new Vector3(sideGap, fh, 0.3f), darkWood);
+        Box("Glass_Side_E", shell, new Vector3(W - sideGap / 2f, cy, ZM), new Vector3(sideGap, fh, 0.3f), darkWood);
+        GameObject pane = Box("Glass", props, new Vector3(0f, (fy0 + fy1) / 2f, ZM), new Vector3(fw, fy1 - fy0, 0.04f), Glass());
         pane.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
         MirrorGlass mg = pane.AddComponent<MirrorGlass>();
 
@@ -174,11 +175,25 @@ public static class MirrorRoomBuilder
         List<Collider> blockers = new List<Collider>();
         Material concreteBlock = Pbr("Concrete034", "Concrete034_2K-JPG", "Concrete034_2K-JPG", 3.6f, 0.95f, 1.5f, 0.15f, 0.7f);
         // Nabil's side: a long concrete block wall across the left of the room (gap on the right)
-        Box("Divider_You", props, new Vector3(-1.2f, 0.475f, 2.7f), new Vector3(3.6f, 0.95f, 0.5f), concreteBlock);
+        Material concreteBlock2 = Pbr("Concrete034", "Concrete034_2K-JPG", "Concrete034_2K-JPG", 3.9f, 0.8f, 1.5f, 0.15f, 0.7f);
+        Box("Divider_You_A", props, new Vector3(-1.05f, 0.4f, 1.6f), new Vector3(3.9f, 0.8f, 0.5f), concreteBlock2);
+        Material concreteBlock3 = Pbr("Concrete034", "Concrete034_2K-JPG", "Concrete034_2K-JPG", 3.6f, 0.8f, 1.5f, 0.15f, 0.7f);
+        Box("Divider_You_B", props, new Vector3(1.2f, 0.4f, 3.05f), new Vector3(3.6f, 0.8f, 0.5f), concreteBlock3);
         // the copy's side: a polished sideboard, in the left of the far half (= the player's right, reflected)
         Material sideboard = Pbr("Wood", "WoodFloor064_2K-JPG", "WoodFloor064_2K-JPG", 3.0f, 0.9f, 1.0f, 0.6f, 0.6f);
         GameObject sb = Box("Sideboard_Copy", props, new Vector3(-2.25f, 0.45f, 8.6f), new Vector3(1.5f, 0.9f, 0.5f), sideboard);
         blockers.Add(sb.GetComponent<Collider>());
+
+        // the life he drew for himself: the antique set (URP copies of the package's materials)
+        string lp = "Assets/LouisPhilippeAntiqueFurniture/";
+        Material chairM = ModelMat("LP_Chair", lp + "texmap/LouisPhilippe_chair_AlbedoTransparency.png", lp + "texmap/LouisPhilippe_chair_Normal.png", null, 0.5f, 0.1f);
+        Material chairP = ModelMat("LP_ChairPillow", lp + "texmap/LouisPhilippe_pillow chair_AlbedoTransparency.png", lp + "texmap/LouisPhilippe_pillow chair_Normal.png", null, 0.4f, 0f);
+        Material tableM = ModelMat("LP_Table", lp + "texmap/LouisPhilippe_table_AlbedoTransparency.png", lp + "texmap/LouisPhilippe_table_Normal.png", null, 0.55f, 0.1f);
+        GameObject tbl = Place(lp + "models/LPTable.fbx", props, new Vector3(0.2f, 0f, 9.0f), 0f, 0.47f, tableM, "Table_Copy");
+        blockers.Add(tbl.GetComponent<Collider>());
+        GameObject chr = Place(lp + "models/LPChair.fbx", props, new Vector3(1.13f, 0f, 9.05f), 264.32f, 1.25f, chairM, "Chair_Copy");
+        foreach (Renderer r in chr.GetComponentsInChildren<Renderer>()) if (r.name.StartsWith("a_padding")) r.sharedMaterial = chairP;
+        blockers.Add(chr.GetComponent<Collider>());
 
         Material clockMat = ModelMat("Clock", Models + "antique-clock/textures/Clock_default_color.jpg", Models + "antique-clock/textures/Clock_default_nmap.jpg", null, 0.55f, 0.25f);
         GameObject clock = Place(Models + "antique-clock/model/G.obj", props, new Vector3(2.5f, 0f, 12.2f), 90f, 2.1f, clockMat, "Clock_Copy");
@@ -189,12 +204,48 @@ public static class MirrorRoomBuilder
 
         // ---------------- plates ----------------
         Material plateMat = Pbr("Tiles", "Tiles074_2K-JPG", "Tiles074_2K-JPG", 1.1f, 1.1f, 1.0f, 0.4f, 0.55f);
-        Material glowMat = Plain("PlateGlow", new Color(0.25f, 0.18f, 0.08f), 0.3f, 0f, new Color(0.1f, 0.07f, 0.03f));
+        Material glowMat = Plain("PlateGlow", new Color(0.45f, 0.30f, 0.10f), 0.3f, 0f, new Color(2.6f, 1.5f, 0.4f));
         Vector3 pYou = new Vector3(1.6f, 0f, 5.0f);
         Vector3 pCopy = new Vector3(-1.6f, 0f, D - 5.0f);
         Transform tYou, tCopy; Renderer gYou, gCopy;
         MakePlate("Plate_You", props, pYou, plateMat, glowMat, out tYou, out gYou);
         MakePlate("Plate_Copy", props, pCopy, plateMat, glowMat, out tCopy, out gCopy);
+
+        // ---------------- Nabil's real life: the housekeeping side ----------------
+        // Everything here sits where a reflected copy-side blocker stops Nabil, so no wall is ever invisible.
+        string cartDir = "Assets/Models/Cleaning cart/";
+        Material cartMat = ModelMat("Cart", cartDir + "textures/Cleaning_Cart_Unwrapped_Cleaning_Cart_Base.png", cartDir + "textures/Cleaning_Cart_Unwrapped_Cleaning_Cart_Norm.png", null, 0.45f, 0.5f);
+        Place(cartDir + "source/Cleaning_Cart.fbx", props, new Vector3(2.25f, 0f, 4.0f), 90f, 1.25f, cartMat, "Cart_You", -90f);
+        string lockerPrefab = "Assets/Low-Poly 3D Lockers/Low-Poly 3D Lockers/Prefabs/M.C.C.prefab";
+        for (int li = 0; li < 2; li++) Place(lockerPrefab, props, new Vector3(-2.75f, 0f, 1.05f + li * 0.52f), 90f, 1.99f, null, "Locker_You_" + li);
+        // coat rail on the west wall with the uniform hanging from it
+        Material steel = Plain("RailSteel", new Color(0.45f, 0.46f, 0.48f), 0.5f, 0.7f);
+        GameObject rail = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+        rail.name = "Rail_You"; rail.transform.SetParent(props, false);
+        rail.transform.localPosition = new Vector3(-2.82f, 1.77f, 4.6f); rail.transform.localRotation = Quaternion.Euler(90f, 0f, 0f); rail.transform.localScale = new Vector3(0.04f, 0.8f, 0.04f);
+        rail.GetComponent<Renderer>().sharedMaterial = steel; Object.DestroyImmediate(rail.GetComponent<Collider>());
+        foreach (float rz in new[] { 3.8f, 5.4f })
+            Box("Rail_Bracket", props, new Vector3(-2.9f, 1.77f, rz), new Vector3(0.2f, 0.04f, 0.04f), steel, false);
+        // hanger: stem + hook over the rail + shoulder bar, so the uniform visibly hangs
+        foreach (var hp in new[] { new object[] { "Hanger_Stem", PrimitiveType.Cylinder, new Vector3(-2.80f, 1.80f, 4.6f), new Vector3(0.012f, 0.05f, 0.012f), Vector3.zero }, new object[] { "Hanger_Hook", PrimitiveType.Cylinder, new Vector3(-2.80f, 1.83f, 4.6f), new Vector3(0.012f, 0.03f, 0.012f), new Vector3(90f, 0f, 0f) }, new object[] { "Hanger_Bar", PrimitiveType.Cube, new Vector3(-2.80f, 1.61f, 4.6f), new Vector3(0.02f, 0.012f, 0.6f), Vector3.zero } })
+        {
+            GameObject hg = GameObject.CreatePrimitive((PrimitiveType)hp[1]);
+            hg.name = (string)hp[0]; hg.transform.SetParent(props, false);
+            hg.transform.localPosition = (Vector3)hp[2]; hg.transform.localScale = (Vector3)hp[3]; hg.transform.localRotation = Quaternion.Euler((Vector3)hp[4]);
+            hg.GetComponent<Renderer>().sharedMaterial = steel; Object.DestroyImmediate(hg.GetComponent<Collider>());
+        }
+        GameObject uni = Place("Assets/Models/HangingUniform/HangingUniform.fbx", props, new Vector3(-2.7f, 0.55f, 4.6f), 90f, 1.2f, null, "Uniform_You");
+        Object.DestroyImmediate(uni.GetComponent<BoxCollider>());
+        Material pail = Plain("Pail", new Color(0.35f, 0.38f, 0.40f), 0.5f, 0.4f);
+        GameObject bucket = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+        bucket.name = "Bucket_You"; bucket.transform.SetParent(props, false);
+        bucket.transform.localPosition = new Vector3(2.75f, 0.25f, 4.0f); bucket.transform.localScale = new Vector3(0.45f, 0.25f, 0.45f);
+        bucket.GetComponent<Renderer>().sharedMaterial = pail;
+        Box("Crate_Cart", props, new Vector3(1.7f, 0.2f, 4.0f), new Vector3(0.4f, 0.4f, 0.4f), concreteBlock);
+        Box("Boxes_You_A", props, new Vector3(-2.65f, 0.3f, 5.6f), new Vector3(0.7f, 0.6f, 0.6f), concreteBlock);
+        Box("Boxes_You_B", props, new Vector3(-2.55f, 0.75f, 5.65f), new Vector3(0.45f, 0.3f, 0.45f), concreteBlock);
+        GameObject shirt = Place("Assets/Models/Folded shirt/source/simple folded shirt.obj", props, new Vector3(-2.55f, 0.9f, 5.65f), 0f, 0.05f, null, "Shirt_You");
+        Object.DestroyImmediate(shirt.GetComponent<BoxCollider>());
 
         // ---------------- exit door (Nabil's side, east wall) ----------------
         Material doorMat = Plain("ExitDoor", new Color(0.22f, 0.20f, 0.17f), 0.4f);
@@ -219,13 +270,16 @@ public static class MirrorRoomBuilder
         // ---------------- lights ----------------
         Material bulbMat = Plain("Bulb", new Color(0.8f, 0.9f, 1f), 0.1f, 0f, new Color(1.2f, 1.4f, 1.6f));
         GameObject fix = Box("Bulb_You_Fixture", lighting, new Vector3(0f, H - 0.06f, 2.9f), new Vector3(0.5f, 0.05f, 0.14f), bulbMat, false);
-        Light cold = Point("Bulb_You", lighting, new Vector3(0f, H - 0.3f, 2.9f), new Color(0.72f, 0.88f, 1f), 1.4f, 6.5f);
+        Light cold = Point("Bulb_You", lighting, new Vector3(0f, H - 0.3f, 2.9f), new Color(0.72f, 0.88f, 1f), 3.0f, 8f);
         FlickerLight fl = cold.gameObject.AddComponent<FlickerLight>();
-        Set(fl, so => { so.FindProperty("baseIntensity").floatValue = 1.4f; so.FindProperty("wobble").floatValue = 0.25f; so.FindProperty("dropEvery").floatValue = 3.2f; so.FindProperty("bulb").objectReferenceValue = fix.GetComponent<Renderer>(); });
-        Light cold2 = Point("Glow_You", lighting, new Vector3(1.5f, 2.0f, 5.0f), new Color(0.6f, 0.75f, 0.9f), 0.4f, 3f);
-        Light warm = Point("Chandelier_Copy", lighting, new Vector3(0f, H - 0.4f, 9.8f), new Color(1f, 0.78f, 0.5f), 3.2f, 8f);
-        Point("Copy_Fill", lighting, new Vector3(0f, 2.2f, 10.6f), new Color(1f, 0.8f, 0.55f), 1.6f, 4.5f);
-        Light lampLight = Point("Lamp_Copy_Light", lighting, lamp.transform.position + new Vector3(0f, 1.55f, 0f), new Color(1f, 0.72f, 0.4f), 1.5f, 4.5f);
+        Set(fl, so => { so.FindProperty("baseIntensity").floatValue = 3.0f; so.FindProperty("wobble").floatValue = 0.25f; so.FindProperty("dropEvery").floatValue = 3.2f; so.FindProperty("bulb").objectReferenceValue = fix.GetComponent<Renderer>(); });
+        Light cold2 = Point("Glow_You", lighting, new Vector3(1.5f, 2.0f, 5.0f), new Color(0.6f, 0.75f, 0.9f), 1.2f, 3.5f);
+        Light warm = Point("Chandelier_Copy", lighting, new Vector3(0f, H - 0.4f, 9.8f), new Color(1f, 0.78f, 0.5f), 6.0f, 10f);
+        Point("Copy_Fill", lighting, new Vector3(0f, 2.2f, 10.6f), new Color(1f, 0.8f, 0.55f), 3.0f, 5.5f);
+        Point("Glow_Copy", lighting, new Vector3(-1.6f, 1.6f, D - 5.0f), new Color(1f, 0.8f, 0.5f), 1.6f, 3.5f);
+        Point("Fill_Copy_Floor", lighting, new Vector3(0f, 1.4f, 7.2f), new Color(1f, 0.85f, 0.6f), 2.0f, 6f);
+        Point("Fill_You_Back", lighting, new Vector3(-0.8f, 2.2f, 1.2f), new Color(0.6f, 0.75f, 0.95f), 1.5f, 5f);
+        Light lampLight = Point("Lamp_Copy_Light", lighting, lamp.transform.position + new Vector3(0f, 1.55f, 0f), new Color(1f, 0.72f, 0.4f), 2.8f, 5.5f);
         cold.shadows = LightShadows.Soft; warm.shadows = LightShadows.Soft;
 
         // ---------------- the copy ----------------

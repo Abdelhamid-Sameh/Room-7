@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: c36d5e27bfa609e48a219eb3197da5ea
+timeCreated: 1515620402
+licenseType: Store
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 109193
+  packageName: Untitled
+  packageVersion: 1.0
+  assetPath: Assets/LouisPhilippeAntiqueFurniture/mat/chair_pillow.mat
+  uploadId: 223796

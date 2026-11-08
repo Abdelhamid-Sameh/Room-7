@@ -309,6 +309,19 @@ public class PhoneUI : MonoBehaviour
         yield return SayTo(Unknown, false, "متعرفش الزمن ممكن يغير الواحد ازاى", 2.0f);
     }
 
+    /// <summary>The mirror room is solved: the Unknown Number again, and Nabil answers.</summary>
+    public static void MirrorSolved()
+    {
+        if (Instance != null && !GameState.UnknownMirrorTexted) Instance.StartCoroutine(Instance.UnknownInMirrorRoom());
+    }
+
+    private IEnumerator UnknownInMirrorRoom()
+    {
+        GameState.UnknownMirrorTexted = true;
+        yield return SayTo(Unknown, false, "شوف كان زمانك بقيت فين", 1.0f);
+        yield return SayTo(Unknown, true, "و كنت هبقى مبسوط ؟", 1.8f);
+    }
+
     private IEnumerator SayTo(string contact, bool fromNabil, string text, float gap)
     {
         yield return Wait(gap);

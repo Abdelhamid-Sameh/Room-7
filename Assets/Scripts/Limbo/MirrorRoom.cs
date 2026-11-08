@@ -34,9 +34,9 @@ public class MirrorRoom : MonoBehaviour
     [SerializeField] private float insideZ = 23.3f;
 
     [Header("Look")]
-    [SerializeField] private Color fogColor = new Color(0.03f, 0.03f, 0.035f);
-    [SerializeField] private float fogDensity = 0.02f;
-    [SerializeField] private Color ambientColor = new Color(0.06f, 0.055f, 0.05f);
+    [SerializeField] private Color fogColor = new Color(0.06f, 0.06f, 0.065f);
+    [SerializeField] private float fogDensity = 0.012f;
+    [SerializeField] private Color ambientColor = new Color(0.17f, 0.16f, 0.15f);
     [SerializeField] private float reflectionIntensity = 0.8f;
     [SerializeField] private Cubemap reflection;
 
@@ -229,8 +229,11 @@ public class MirrorRoom : MonoBehaviour
 
     private void UpdateGlow()
     {
-        if (matYou != null) matYou.SetColor(Emission, new Color(1.0f, 0.75f, 0.35f) * (glowA * 2.2f));
-        if (matCopy != null) matCopy.SetColor(Emission, new Color(1.0f, 0.75f, 0.35f) * (glowB * 2.2f));
+        // same soft amber pulse as the tidy-up items; pressed = steady and bright
+        float pulse = 0.55f + 0.45f * Mathf.Sin(Time.time * 2.2f);
+        float idle = 0.9f + 0.9f * pulse;
+        if (matYou != null) matYou.SetColor(Emission, new Color(1.0f, 0.72f, 0.28f) * Mathf.Lerp(idle, 3.2f, Mathf.InverseLerp(0.12f, 1f, glowA)));
+        if (matCopy != null) matCopy.SetColor(Emission, new Color(1.0f, 0.72f, 0.28f) * Mathf.Lerp(idle, 3.2f, Mathf.InverseLerp(0.12f, 1f, glowB)));
     }
 
     public void Knock()
@@ -255,9 +258,7 @@ public class MirrorRoom : MonoBehaviour
         AudioLevels.PlaySfx(plateClick, plateYou.position);
         AudioLevels.PlaySfx(plateClick, plateCopy.position);
 
-        MonoBehaviour ctrl = PauseMenu.FindPlayerController();
-        if (ctrl != null) ctrl.enabled = false;
-
+        // the player stays free: the finale plays out around them
         // the music box winds down
         for (float t = 0f; t < 1f; t += Time.deltaTime / 1.4f) { musicFade = 1f - t; yield return null; }
         musicFade = 0f; musicSrc.Stop();
@@ -265,6 +266,7 @@ public class MirrorRoom : MonoBehaviour
 
         // it stops copying you and turns to look
         AudioLevels.PlaySfx(sting, player.position);
+        PhoneUI.MirrorSolved();
         Quaternion from = copy.rotation;
         Vector3 toYou = player.position - copy.position; toYou.y = 0f;
         Quaternion to = Quaternion.LookRotation(toYou.normalized, Vector3.up);
@@ -275,8 +277,6 @@ public class MirrorRoom : MonoBehaviour
         if (exitDoor != null) exitDoor.Locked = false;
         if (lockLight != null) lockLight.material.SetColor(Emission, new Color(0.2f, 1f, 0.4f) * 2f);
         AudioLevels.PlaySfx(plateClick, exitDoor != null ? exitDoor.transform.position : player.position);
-        PauseMenu.ClearStaleInput();
-        if (ctrl != null) ctrl.enabled = true;
         stage = Stage.Done;
     }
 }

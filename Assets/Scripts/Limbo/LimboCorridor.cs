@@ -21,9 +21,9 @@ public class LimboCorridor : MonoBehaviour
     [Tooltip("Once Nabil is in the mirror room it owns the fog and ambient.")]
     [SerializeField] private MirrorRoom mirror;
 
-    private static readonly Color CorridorFog = new Color(0.02f, 0.025f, 0.02f), RoomFog = new Color(0.02f, 0.03f, 0.07f);
-    private static readonly Color CorridorAmbient = new Color(0.03f, 0.035f, 0.03f), RoomAmbient = new Color(0.035f, 0.04f, 0.07f);
-    private const float CorridorDensity = 0.09f, RoomDensity = 0.025f;
+    private static readonly Color CorridorFog = new Color(0.04f, 0.05f, 0.04f), RoomFog = new Color(0.04f, 0.06f, 0.12f);
+    private static readonly Color CorridorAmbient = new Color(0.09f, 0.10f, 0.09f), RoomAmbient = new Color(0.10f, 0.11f, 0.17f);
+    private const float CorridorDensity = 0.06f, RoomDensity = 0.018f;
 
     private Transform player;
     private bool inRoom;
