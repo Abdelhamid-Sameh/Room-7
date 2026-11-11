@@ -94,10 +94,11 @@ public static class HangRoomBuilder
         Material wood = M("ChairWood", new Color(0.22f, 0.14f, 0.08f), 0.3f);
 
         // ---------------------------------------------------------- corridor (z 0..12) --
-        Box("C_Floor", shell, new Vector3(0f, -0.05f, 6f), new Vector3(2.2f, 0.1f, 12.2f), floor);
-        Box("C_Ceiling", shell, new Vector3(0f, 2.75f, 6f), new Vector3(2.2f, 0.1f, 12.2f), ceil);
-        Box("C_Wall_W", shell, new Vector3(-1.05f, 1.35f, 6f), new Vector3(0.1f, 2.7f, 12.2f), wall);
-        Box("C_Wall_E", shell, new Vector3(1.05f, 1.35f, 6f), new Vector3(0.1f, 2.7f, 12.2f), wall);
+        // (starts at z=0, behind the mirror room's wall: an earlier start at -0.1 was coplanar with that wall and z-fought, flashing a frame around the door)
+        Box("C_Floor", shell, new Vector3(0f, -0.05f, 6.05f), new Vector3(2.2f, 0.1f, 12.1f), floor);
+        Box("C_Ceiling", shell, new Vector3(0f, 2.75f, 6.05f), new Vector3(2.2f, 0.1f, 12.1f), ceil);
+        Box("C_Wall_W", shell, new Vector3(-1.05f, 1.35f, 6.05f), new Vector3(0.1f, 2.7f, 12.1f), wall);
+        Box("C_Wall_E", shell, new Vector3(1.05f, 1.35f, 6.05f), new Vector3(0.1f, 2.7f, 12.1f), wall);
         Box("Skirt_W", shell, new Vector3(-0.99f, 0.07f, 6f), new Vector3(0.04f, 0.14f, 12f), trim, false);
         Box("Skirt_E", shell, new Vector3(0.99f, 0.07f, 6f), new Vector3(0.04f, 0.14f, 12f), trim, false);
 
@@ -182,11 +183,12 @@ public static class HangRoomBuilder
         pivot.transform.SetParent(props, false);
         pivot.transform.position = new Vector3(RopeX, 3.2f, RopeZ);
         const float RingR = 0.085f, RingY = -1.23f;   // must match the loop in Assets/Models/Hang/Noose.fbx (Blender)
-        Vector3 ringC = new Vector3(-RingR, RingY, 0f);
+        Vector3 ringC = new Vector3(RingR, RingY, 0f);   // the noose is mirrored (scale x -1) so the loop leans to the viewer's left
         GameObject nooseFbx = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Models/Hang/Noose.fbx");
         GameObject noose = (GameObject)PrefabUtility.InstantiatePrefab(nooseFbx, pivot.transform);
         noose.name = "Noose";
         noose.transform.localPosition = Vector3.zero;
+        noose.transform.localScale = new Vector3(-1f, 1f, 1f);
         foreach (Renderer nr in noose.GetComponentsInChildren<Renderer>()) nr.sharedMaterial = ropeMat;
 
         // the body: Nabil's rig, posed hanging. Hidden until the sequence shows it in the dark moments.
@@ -199,7 +201,7 @@ public static class HangRoomBuilder
         if (anim != null) anim.enabled = false;
         PoseHanging(body.transform);
         Transform nk = Deep(body.transform, "neck1");
-        if (nk != null) body.transform.position += pivot.transform.TransformPoint(ringC) - nk.position;
+        if (nk != null) body.transform.position += pivot.transform.TransformPoint(ringC) - nk.position + pivot.transform.TransformVector(new Vector3(-0.045f, 0.03f, 0f));   // nudge: the neck sits in the middle of the loop, not at its edge
         RoomKit.NoShadows(body);
 
         // the chair, knocked over under the rope
@@ -260,11 +262,11 @@ public static class HangRoomBuilder
     /// <summary>Limp: head dropped, arms straight down, legs together. Angles are tuned by eye (the rig's axes).</summary>
     static void PoseHanging(Transform rig)
     {
-        Rot(rig, "neck", new Vector3(0f, 0f, 35f));
-        Rot(rig, "head", new Vector3(0f, 0f, 20f));
+        Rot(rig, "neck", new Vector3(0f, 0f, -35f));
+        Rot(rig, "head", new Vector3(0f, 0f, -20f));
         Rot(rig, "l upperarm", new Vector3(0f, 0f, -55f));
         Rot(rig, "r upperarm", new Vector3(0f, 0f, 55f));
-        Rot(rig, "spine1", new Vector3(0f, 0f, 8f));
+        Rot(rig, "spine1", new Vector3(0f, 0f, -8f));
     }
 
     static void Rot(Transform rig, string bone, Vector3 euler)

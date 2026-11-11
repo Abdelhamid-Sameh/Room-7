@@ -63,6 +63,8 @@ public class GameSystems : MonoBehaviour
         gameObject.AddComponent<PhoneUI>().Build(hudFont);
         gameObject.AddComponent<Flashlight>();
         gameObject.AddComponent<CameraEffects>();
+        gameObject.AddComponent<DialogueManager>().Build(hudFont);
+        gameObject.AddComponent<StoryDirector>();
 
         GameState.Changed += OnStateChanged;
     }

@@ -91,7 +91,7 @@ public class StreamDoor : Interactable
         bool inRoom = Vector3.Dot(d, frame.forward) > 0f && stage == Stage.Ready;
 
         if (inRoom && !wasInside) GameState.Visit(sceneName);               // 'enter the staff room' counts when you step in
-        if (!inRoom && wasInside && dist > 1.5f) { PhoneUI.BackInCorridor(); if (sceneName == "Room03") PhoneUI.LeftRoom3(); }   // ...and stepping back out is the old 'back in the corridor'
+        if (!inRoom && wasInside && dist > 1.5f) { PhoneUI.BackInCorridor(); if (sceneName == "Room03") PhoneUI.LeftRoom3(); if (sceneName == "Room04") StoryDirector.LeftRoom4(); }   // ...and stepping back out is the old 'back in the corridor'
         if (inRoom != wasInside && (inRoom || dist > 1.5f)) wasInside = inRoom;
 
         if (stage == Stage.Idle)

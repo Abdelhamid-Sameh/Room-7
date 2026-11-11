@@ -106,6 +106,12 @@ public static class GameState
     /// <summary>Nabil has texted Malak - her contact only exists from then on.</summary>
     public static bool MalakContacted;
 
+    public static void RenameContact(string from, string to)
+    {
+        for (int i = 0; i < Messages.Count; i++)
+            if (Messages[i].Contact == from) { ChatMessage m = Messages[i]; m.Contact = to; Messages[i] = m; }
+    }
+
     public static void AddMessage(string contact, string text, bool fromPlayer)
     {
         Messages.Add(new ChatMessage { Contact = contact, Text = text, FromPlayer = fromPlayer });
@@ -237,6 +243,8 @@ public static class GameState
         R2Done = false; R2SideOpen = false; R2Replied = false; PowerOut = false;
         Limbo = false; LimboLit = false; UnknownTexted = false; UnknownGameBoyTexted = false; UnknownMirrorTexted = false; GameBoySolved = false; MirrorSolved = false; HangDone = false; WakeUpPending = false;
         UnlockedTracks.Clear();
+        StoryStateManager.Clear();
+        StoryStateManager.Clear();
 
         DoorAngles.Clear();
         R3SafeOpen = false; R3SafeItem = ""; R3MainDone = false; R3EggDone = false;

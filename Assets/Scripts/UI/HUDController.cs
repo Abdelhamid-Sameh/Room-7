@@ -47,6 +47,7 @@ public class HUDController : MonoBehaviour
         public string Label;
         public System.Func<bool> IsDone;
         public int Group;      // tasks of one group are on screen together; the group leaves when all are done
+        public System.Func<bool> Unlocked;   // null = always available (see ObjectiveManager)
     }
 
     private class TaskRow
@@ -302,16 +303,13 @@ public class HUDController : MonoBehaviour
         // Add or reorder tasks here. Order = the order they are revealed in.
         // Tasks are grouped: one group is on screen at a time. When its last task is ticked it lingers a
         // moment, then the whole group leaves and the next group arrives.
-        TaskDef[] defs =
+        // The objectives themselves live in ObjectiveManager (one table for the whole story).
+        TaskDef[] defs = new TaskDef[ObjectiveManager.All.Length];
+        for (int i = 0; i < defs.Length; i++)
         {
-            new TaskDef { Group = 0, Label = "Enter the staff room",        IsDone = () => GameState.HasVisited("StaffRoom") },
-            new TaskDef { Group = 1, Label = "Put on your uniform",         IsDone = () => GameState.UniformWorn },
-            new TaskDef { Group = 1, Label = "Take the cleaning supplies",  IsDone = () => GameState.HasCleaningKit },
-            new TaskDef { Group = 1, Label = "Take the radio",              IsDone = () => GameState.HasRadio },
-            new TaskDef { Group = 2, Label = "Clean room 1",                IsDone = () => GameState.IsRoomCleaned("Room01") },
-            new TaskDef { Group = 2, Label = "Clean room 2",                IsDone = () => GameState.R2Done },
-            new TaskDef { Group = 2, Label = "Clean room 3",                IsDone = () => GameState.IsRoomCleaned("Room03") },
-        };
+            ObjectiveManager.Objective o = ObjectiveManager.All[i];
+            defs[i] = new TaskDef { Group = o.Group, Label = o.Label, IsDone = o.IsDone, Unlocked = o.Unlocked };
+        }
 
         taskRows = new TaskRow[defs.Length];
         for (int i = 0; i < defs.Length; i++)
@@ -656,7 +654,7 @@ public class HUDController : MonoBehaviour
         // Which group is current: the one holding the first unfinished task (-1 = everything is done).
         int want = -1;
         for (int i = 0; i < taskRows.Length; i++)
-            if (!taskRows[i].Done) { want = taskRows[i].Def.Group; break; }
+            if (!taskRows[i].Done && IsOpen(taskRows[i])) { want = taskRows[i].Def.Group; break; }
 
         if (!tasksInitialized)
         {
@@ -675,6 +673,8 @@ public class HUDController : MonoBehaviour
         tasksInitialized = true;
     }
 
+    private static bool IsOpen(TaskRow row) { return row.Def.Unlocked == null || row.Def.Unlocked(); }
+
     /// <summary>Inside the shown group, finished tasks stay and only the first unfinished one is visible.</summary>
     private void ApplyTaskVisibility(float revealDelay)
     {
@@ -682,7 +682,7 @@ public class HUDController : MonoBehaviour
         for (int i = 0; i < taskRows.Length; i++)
         {
             TaskRow row = taskRows[i];
-            bool inGroup = row.Def.Group == shownGroup;
+            bool inGroup = row.Def.Group == shownGroup && IsOpen(row);
             bool visible = inGroup && (row.Done || !pendingSeen);
             if (inGroup && !row.Done) pendingSeen = true;
 

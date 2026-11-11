@@ -2962,7 +2962,8 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 114032679875626476, guid: 50f132ebf2f56c94fb5dda3d12b89795, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents:
@@ -2989,15 +2990,19 @@ MonoBehaviour:
   m_GameObject: {fileID: 333197460}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 86dcb06244a2b5b41b872cd30ddb0915, type: 3}
+  m_Script: {fileID: 11500000, guid: ffa6b1124a32a9d4d8e1513ac7051c84, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::DoorTransition
+  m_EditorClassIdentifier: Assembly-CSharp::StreamDoor
   prompt: Interact
-  targetScene: Room04
-  spawnId: FromCorridor
-  displayName: Enter room 4
+  sceneName: Room04
   gatedByRoomAccess: 1
   lockedLabel: Locked
+  loadRadius: 9
+  unloadRadius: 13
+  openAngle: 100
+  seconds: 0.8
+  openClip: {fileID: 8300000, guid: 44b63b0db16ce624b97e45ebde0a0971, type: 3}
+  closeClip: {fileID: 8300000, guid: bc37ad25465405a428a26ff0facd9a7b, type: 3}
 --- !u!1 &339354646
 GameObject:
   m_ObjectHideFlags: 0
@@ -4219,6 +4224,51 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 460089441}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &466863040
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 466863041}
+  - component: {fileID: 466863042}
+  m_Layer: 0
+  m_Name: Spawn_Room04_Door
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &466863041
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 466863040}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: 0.7071068, z: -0, w: -0.7071068}
+  m_LocalPosition: {x: 1, y: 0, z: 7.7}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1121410514}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &466863042
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 466863040}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6ee72cfb034c950408b59624be8c7cb7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SpawnPoint
+  spawnId: Room04_Door
 --- !u!1 &474038854
 GameObject:
   m_ObjectHideFlags: 0
@@ -8644,6 +8694,7 @@ Transform:
   - {fileID: 585053760}
   - {fileID: 1594084932}
   - {fileID: 1700536069}
+  - {fileID: 466863041}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1132444241
@@ -9658,7 +9709,8 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 114032679875626476, guid: 50f132ebf2f56c94fb5dda3d12b89795, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents:
@@ -9685,15 +9737,19 @@ MonoBehaviour:
   m_GameObject: {fileID: 1226373762}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 86dcb06244a2b5b41b872cd30ddb0915, type: 3}
+  m_Script: {fileID: 11500000, guid: ffa6b1124a32a9d4d8e1513ac7051c84, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::DoorTransition
+  m_EditorClassIdentifier: Assembly-CSharp::StreamDoor
   prompt: Interact
-  targetScene: Room06
-  spawnId: FromCorridor
-  displayName: Enter room 6
+  sceneName: Room06
   gatedByRoomAccess: 1
   lockedLabel: Locked
+  loadRadius: 9
+  unloadRadius: 13
+  openAngle: 100
+  seconds: 0.8
+  openClip: {fileID: 8300000, guid: 44b63b0db16ce624b97e45ebde0a0971, type: 3}
+  closeClip: {fileID: 8300000, guid: bc37ad25465405a428a26ff0facd9a7b, type: 3}
 --- !u!1 &1236170019
 GameObject:
   m_ObjectHideFlags: 0
@@ -12400,7 +12456,8 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 114032679875626476, guid: 50f132ebf2f56c94fb5dda3d12b89795, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents:
@@ -12427,15 +12484,19 @@ MonoBehaviour:
   m_GameObject: {fileID: 1472082305}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 86dcb06244a2b5b41b872cd30ddb0915, type: 3}
+  m_Script: {fileID: 11500000, guid: ffa6b1124a32a9d4d8e1513ac7051c84, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::DoorTransition
+  m_EditorClassIdentifier: Assembly-CSharp::StreamDoor
   prompt: Interact
-  targetScene: Room05
-  spawnId: FromCorridor
-  displayName: Enter room 5
+  sceneName: Room05
   gatedByRoomAccess: 1
   lockedLabel: Locked
+  loadRadius: 9
+  unloadRadius: 13
+  openAngle: 100
+  seconds: 0.8
+  openClip: {fileID: 8300000, guid: 44b63b0db16ce624b97e45ebde0a0971, type: 3}
+  closeClip: {fileID: 8300000, guid: bc37ad25465405a428a26ff0facd9a7b, type: 3}
 --- !u!1 &1485662526
 GameObject:
   m_ObjectHideFlags: 0
@@ -15859,7 +15920,8 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 114032679875626476, guid: 50f132ebf2f56c94fb5dda3d12b89795, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents:
@@ -15886,15 +15948,19 @@ MonoBehaviour:
   m_GameObject: {fileID: 1837618538}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 86dcb06244a2b5b41b872cd30ddb0915, type: 3}
+  m_Script: {fileID: 11500000, guid: ffa6b1124a32a9d4d8e1513ac7051c84, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::DoorTransition
+  m_EditorClassIdentifier: Assembly-CSharp::StreamDoor
   prompt: Interact
-  targetScene: Room07
-  spawnId: FromCorridor
-  displayName: Enter room 7
+  sceneName: Room07
   gatedByRoomAccess: 1
   lockedLabel: Locked
+  loadRadius: 9
+  unloadRadius: 13
+  openAngle: 100
+  seconds: 0.8
+  openClip: {fileID: 8300000, guid: 44b63b0db16ce624b97e45ebde0a0971, type: 3}
+  closeClip: {fileID: 8300000, guid: bc37ad25465405a428a26ff0facd9a7b, type: 3}
 --- !u!1 &1845710329
 GameObject:
   m_ObjectHideFlags: 0

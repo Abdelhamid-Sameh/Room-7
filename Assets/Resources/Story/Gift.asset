@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 877cf1550e9a02e42b20940498e86ce1, type: 3}
+  m_Name: Gift
+  m_EditorClassIdentifier: Assembly-CSharp::ConversationData
+  lines:
+  - speaker: Malak
+    fromPlayer: 0
+    text: 
+    delay: 1.3
+    setFlag: 
+    choices:
+    - label: "\u0627\u0646\u062A\u064A \u0631\u0645\u064A\u062A\u0649 \u0627\u0644\u0647\u062F\u064A\u0629
+        \u061F"
+      setFlag: askedGift
+      next: {fileID: 11400000, guid: 02ae43142b2f6754dbf3b803abcbc11e, type: 2}
+    - label: 
+      setFlag: giftSkipped
+      next: {fileID: 0}
+  flagWhenFinished: giftDone

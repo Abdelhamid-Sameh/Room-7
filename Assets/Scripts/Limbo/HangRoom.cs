@@ -29,6 +29,7 @@ public class HangRoom : MonoBehaviour
     [Header("Audio")]
     [SerializeField] private TMP_FontAsset font;
     [SerializeField] private AudioClip ambience, heartbeat;
+    [SerializeField] private AudioClip drone;   // dark chord pad under everything
     [SerializeField] private AudioClip voiceCalm, voiceSarcastic, voiceAngry, voiceDie;
     [SerializeField] private AudioClip laugh1, laugh2, laughLoud;
 
@@ -37,7 +38,7 @@ public class HangRoom : MonoBehaviour
     private Transform player;
     private bool slammed, started, ending;
     private float clock, fear;
-    private AudioSource voiceSrc, beatSrc, ambSrc, bedA, bedB;
+    private AudioSource voiceSrc, beatSrc, ambSrc, bedA, bedB, droneSrc;
     private MaterialPropertyBlock block;
     private Quaternion hangBase;
     private float swaySeed;
@@ -62,6 +63,9 @@ public class HangRoom : MonoBehaviour
         beatSrc.volume = 0f;
         ambSrc.volume = 0.35f * AudioLevels.AmbientVolume;
         if (ambSrc.clip != null) ambSrc.Play();
+        droneSrc = NewSource("Drone", drone, true);
+        droneSrc.volume = 0.5f * AudioLevels.AmbientVolume;
+        droneSrc.volume = 0f;   // fades in when the sequence starts (the mirror room shares this scene)
     }
 
     private AudioSource NewSource(string n, AudioClip clip, bool loop)
@@ -135,7 +139,9 @@ public class HangRoom : MonoBehaviour
         slamHinge.localRotation = to;
         LimboDoor ld = slamHinge.GetComponent<LimboDoor>();
         if (ld != null) ld.Locked = true;   // no way back
-        Sfx.Play(SfxKind.Door);
+        AudioClip shut = Resources.Load<AudioClip>("Sfx/Door_Close");   // a door closing, not the opening sound
+        if (shut != null) AudioSource.PlayClipAtPoint(shut, slamHinge.position, AudioLevels.SfxVolume);
+        else Sfx.Play(SfxKind.Door);
     }
 
     // ------------------------------------------------------------ the sequence --
@@ -148,8 +154,8 @@ public class HangRoom : MonoBehaviour
 
     private static readonly string[] Filler =
     {
-        "بص فوق", "مش فاكر ؟", "اسمي ايه ؟", "انت جيت هنا ليه ؟", "محدش هيسمعك", "الباب اتقفل",
-        "كنت فين ؟", "ليه سبتني ؟", "انا لسه مستني", "فاكرني ؟", "قرب", "انت شايف إيه ؟"
+        "كنت فين ؟", "ليه سبتني ؟", "فاكرني ؟", "حجر", "سلم", "مبسوط معاها ؟",
+        "رفضتك", "يا بائس", "انت ولا حاجه", "يا ضعيف", "انا نسيتك"
     };
 
 private IEnumerator Run()
@@ -159,6 +165,7 @@ private IEnumerator Run()
         StartCoroutine(LampLoop());
         if (beatSrc != null && beatSrc.clip != null) beatSrc.Play();
         BuildOverlay();
+        if (droneSrc != null && droneSrc.clip != null) { droneSrc.Play(); StartCoroutine(Lerp(v => droneSrc.volume = v * AudioLevels.AmbientVolume, 0f, 0.5f, 6f)); }
         bedA = NewSource("LaughBedA", laugh1, true); bedA.volume = 0f; bedA.Play();
         bedB = NewSource("LaughBedB", laugh2, true); bedB.volume = 0f; bedB.pitch = 0.92f;
 
@@ -202,6 +209,7 @@ private IEnumerator Run()
         // the screen closes in; he goes down
         ending = true;
         StartCoroutine(Lerp(v => { if (beatSrc != null) beatSrc.volume = v * AudioLevels.AmbientVolume; }, 0.95f, 0f, 2.5f));
+        StartCoroutine(Lerp(v => { if (droneSrc != null) droneSrc.volume = v * AudioLevels.AmbientVolume; }, 0.5f, 0f, 2.5f));
         StartCoroutine(Lerp(v => { if (ambSrc != null) ambSrc.volume = v * AudioLevels.AmbientVolume; }, 0.35f, 0f, 2.5f));
         StartCoroutine(Lerp(v => { if (bedA != null) bedA.volume = v * AudioLevels.SfxVolume; if (bedB != null) bedB.volume = v * AudioLevels.SfxVolume; }, 0.5f, 0f, 2.5f));
         yield return Lerp(a => { if (black != null) black.color = new Color(0f, 0f, 0f, a); }, 0f, 1f, 2.2f);
@@ -213,6 +221,8 @@ private IEnumerator Run()
         GameState.Limbo = false;
         GameState.LimboLit = false;
         GameState.WakeUpPending = true;
+        ShowHud();   // the sequence switched the HUD canvases off; Nabil is back in the hotel
+        GameState.RaiseChanged();
         if (GameSystems.HasInstance) GameSystems.Instance.Fader.LoadScene("HotelFloor_Corridor", GameState.SpawnStart);
         else UnityEngine.SceneManagement.SceneManager.LoadScene("HotelFloor_Corridor");
     }
@@ -326,6 +336,15 @@ private IEnumerator Run()
         foreach (Canvas c in h.GetComponentsInChildren<Canvas>(true)) c.enabled = false;
         Canvas parent = h.GetComponentInParent<Canvas>();
         if (parent != null) parent.enabled = false;
+    }
+
+    private static void ShowHud()
+    {
+        HUDController h = FindFirstObjectByType<HUDController>();
+        if (h == null) return;
+        foreach (Canvas c in h.GetComponentsInChildren<Canvas>(true)) c.enabled = true;
+        Canvas parent = h.GetComponentInParent<Canvas>();
+        if (parent != null) parent.enabled = true;
     }
 
     private static void StretchFull(Graphic g)

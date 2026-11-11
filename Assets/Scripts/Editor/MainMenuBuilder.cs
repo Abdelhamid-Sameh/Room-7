@@ -120,6 +120,7 @@ public static class MainMenuBuilder
         so.FindProperty("titleFont").objectReferenceValue = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/Menu/PerpetuaTitling-Bold SDF.asset");
         so.FindProperty("menuFont").objectReferenceValue = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/Menu/PerpetuaTitling-Light SDF.asset");
         so.FindProperty("arabicFont").objectReferenceValue = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/Menu/SakkalMajalla-Bold SDF.asset");
+        so.FindProperty("titleArFont").objectReferenceValue = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/Menu/SakkalMajalla-Bold SDF.asset");
         so.FindProperty("cam").objectReferenceValue = cam;
         SetArray(so.FindProperty("bulbs"), bulbs.ToArray());
         SetArray(so.FindProperty("bulbGlass"), glass.ToArray());

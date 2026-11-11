@@ -22,6 +22,9 @@ public static class RoomAccess
             case "Room03":
                 return GameState.IsRoomCleaned("Room01") && GameState.R2Done && !GameState.PowerOut;   // opens once the lights are back
 
+            case "Room04":
+                return StoryStateManager.HasFlag(StoryStateManager.Flags.WokeUp) && !GameState.PowerOut;   // after the hanging room
+
             default:
                 return false;                      // every other room is locked for now
         }

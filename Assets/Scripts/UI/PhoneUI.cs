@@ -322,6 +322,13 @@ public class PhoneUI : MonoBehaviour
         yield return SayTo(Unknown, true, "و كنت هبقى مبسوط ؟", 1.8f);
     }
 
+    /// <summary>One text message for story conversations (DialogueManager): waits, logs it in the Messages tab, toasts it.</summary>
+    public static IEnumerator Message(string contact, bool fromNabil, string text, float gap)
+    {
+        if (Instance == null) yield break;
+        yield return Instance.SayTo(contact, fromNabil, text, gap);
+    }
+
     private IEnumerator SayTo(string contact, bool fromNabil, string text, float gap)
     {
         yield return Wait(gap);

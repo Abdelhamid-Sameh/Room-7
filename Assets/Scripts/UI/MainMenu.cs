@@ -26,7 +26,8 @@ public class MainMenu : MonoBehaviour
     [SerializeField] private TMP_FontAsset font;          // body text (Constantia)
     [SerializeField] private TMP_FontAsset titleFont;     // ROOM 7 (Perpetua Titling Bold)
     [SerializeField] private TMP_FontAsset menuFont;      // buttons and headings (Perpetua Titling Light)
-    [SerializeField] private TMP_FontAsset arabicFont;    // the Arabic title (Sakkal Majalla Bold)
+    [SerializeField] private TMP_FontAsset arabicFont;    // the Arabic numeral 7 (Sakkal Majalla Bold)
+    [SerializeField] private TMP_FontAsset titleArFont;   // the Arabic title (Cairo; Majalla drops the letter ر)
     [SerializeField] private Camera cam;
     [SerializeField] private Light[] bulbs;
     [SerializeField] private Renderer[] bulbGlass;
@@ -132,7 +133,8 @@ private void BuildUi()
         titleSeven = Text(canvasRoot, "Seven", 270, TextAlignmentOptions.Left, Accent, "٧");
         titleAr = Text(canvasRoot, "Arabic", 270, TextAlignmentOptions.Left, Warm, "الغرفة");
         titleRoom = Text(canvasRoot, "Room", 60, TextAlignmentOptions.Left, Dim, "ROOM 7");
-        if (arabicFont != null) { titleSeven.font = arabicFont; titleAr.font = arabicFont; }
+        if (arabicFont != null) titleSeven.font = arabicFont;
+        if (titleArFont != null) titleAr.font = titleArFont;
         if (titleFont != null) titleRoom.font = titleFont;
         titleSeven.enableWordWrapping = false; titleAr.enableWordWrapping = false; titleRoom.enableWordWrapping = false;
         titleRoom.characterSpacing = 38f;
@@ -275,7 +277,7 @@ private void BuildUi()
             new[] { "F", "Flashlight (once you have it)" },
             new[] { "R   T   Y", "Radio: play / next / previous" },
             new[] { "Esc  /  P", "Pause menu: clues, messages, artefacts" },
-            new[] { "Q  /  Esc", "Leave the Game Boy, keypad or document" },
+            new[] { "Q  /  Esc", "Leave" },
         };
         for (int i = 0; i < rows.Length; i++)
         {
@@ -521,6 +523,7 @@ private void ShowPage(Page p, bool instant = false)
             new Preset { Name = "Strange corridor", Hint = "After the safe: Limbo", Scene = "Limbo_Corridor", Spawn = "Limbo_Start", Setup = () => { Base(); Kit(); AfterRoom2(); Limbo(); } },
             new Preset { Name = "Game Boy room", Hint = "The red console and its maze", Scene = "Limbo_Corridor", Spawn = "Limbo_GameBoy", Setup = () => { Base(); Kit(); AfterRoom2(); Limbo(); } },
             new Preset { Name = "Hanging room", Hint = "The corridor, the rope, the messages", Scene = "Limbo_Corridor", Spawn = "Hang_Start", Setup = () => { Base(); Kit(); AfterRoom2(); Limbo(); GameState.GameBoySolved = true; GameState.UnknownGameBoyTexted = true; GameState.MirrorSolved = true; } },
+            new Preset { Name = "Room 4", Hint = "The cinema, everything before it done", Scene = "Room04", Spawn = GameState.SpawnFromCorridor, Setup = () => { Base(); Kit(); AfterRoom2(); AfterHang(); } },
             new Preset { Name = "Mirror room", Hint = "The copy behind the glass", Scene = "Limbo_Corridor", Spawn = "Limbo_Mirror", Setup = () => { Base(); Kit(); AfterRoom2(); Limbo(); GameState.GameBoySolved = true; GameState.UnknownGameBoyTexted = true; } },
         };
     }
@@ -531,6 +534,22 @@ private void ShowPage(Page p, bool instant = false)
     {
         GameState.HasCleaningKit = true; GameState.HasRadio = true;
         GameState.UniformTaken = true; GameState.UniformWorn = true;
+    }
+
+    /// <summary>Everything up to and including the hanging room is finished: back in the hotel, awake, the gift question asked.</summary>
+    private static void AfterHang()
+    {
+        GameState.SetRoomCleaned("Room03");
+        GameState.R3SafeOpen = true; GameState.R3SafeItem = ""; GameState.R3MainDone = true;
+        GameState.AddArtifact("GameBoy");
+        GameState.UnknownTexted = true; GameState.UnknownGameBoyTexted = true; GameState.UnknownMirrorTexted = true;
+        GameState.GameBoySolved = true; GameState.MirrorSolved = true;
+        GameState.HangDone = true;
+        StoryStateManager.SetFlag(StoryStateManager.Flags.HangDone);
+        StoryStateManager.SetFlag(StoryStateManager.Flags.WokeUp);
+        StoryStateManager.SetFlag(StoryStateManager.Flags.AskedGift);
+        StoryStateManager.SetFlag(StoryStateManager.Flags.GiftDone);
+        GameState.UnlockedTracks.Add(StoryDirector.WakeTrackKey);
     }
 
     private static void AfterRoom2()
