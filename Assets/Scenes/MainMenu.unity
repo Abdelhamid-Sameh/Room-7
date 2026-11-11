@@ -1114,7 +1114,7 @@ MonoBehaviour:
   titleFont: {fileID: 11400000, guid: 34619f541d7831547b12a5312018862c, type: 2}
   menuFont: {fileID: 11400000, guid: 49942efd07e945549839b25e59f2bc38, type: 2}
   arabicFont: {fileID: 11400000, guid: 1cf69763c6e9b1e4ba95b4abce07ea01, type: 2}
-  titleArFont: {fileID: 11400000, guid: 1cf69763c6e9b1e4ba95b4abce07ea01, type: 2}
+  titleArFont: {fileID: 11400000, guid: 4798cb50d44c71f4a9fd7090e93310be, type: 2}
   cam: {fileID: 2032936402}
   bulbs:
   - {fileID: 1145054950}

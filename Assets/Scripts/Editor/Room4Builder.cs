@@ -334,6 +334,7 @@ public static class Room4Builder
         vcam.Lens = new Unity.Cinemachine.LensSettings { FieldOfView = 55f, NearClipPlane = 0.05f, FarClipPlane = 100f };
         vcam.Priority.Enabled = true; vcam.Priority.Value = 0;
         Set(film, "filmView", vcam);
+        Set(film, "clip", AssetDatabase.LoadAssetAtPath<UnityEngine.Video.VideoClip>("Assets/Room4/Film/BreakupAtPond.mp4"));
 
         GameObject logic = new GameObject("Room4Logic");
         logic.AddComponent<Room4Controller>();
