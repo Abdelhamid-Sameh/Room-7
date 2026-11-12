@@ -25,6 +25,9 @@ public static class RoomAccess
             case "Room04":
                 return StoryStateManager.HasFlag(StoryStateManager.Flags.WokeUp) && !GameState.PowerOut;   // after the hanging room
 
+            case "Room05":
+                return StoryStateManager.HasFlag(StoryStateManager.Flags.Room4Done) && StoryStateManager.HasFlag(StoryStateManager.Flags.Room4Film) && !GameState.PowerOut;   // after the cinema
+
             default:
                 return false;                      // every other room is locked for now
         }

@@ -524,6 +524,7 @@ private void ShowPage(Page p, bool instant = false)
             new Preset { Name = "Game Boy room", Hint = "The red console and its maze", Scene = "Limbo_Corridor", Spawn = "Limbo_GameBoy", Setup = () => { Base(); Kit(); AfterRoom2(); Limbo(); } },
             new Preset { Name = "Hanging room", Hint = "The corridor, the rope, the messages", Scene = "Limbo_Corridor", Spawn = "Hang_Start", Setup = () => { Base(); Kit(); AfterRoom2(); Limbo(); GameState.GameBoySolved = true; GameState.UnknownGameBoyTexted = true; GameState.MirrorSolved = true; } },
             new Preset { Name = "Room 4", Hint = "The cinema, everything before it done", Scene = "Room04", Spawn = GameState.SpawnFromCorridor, Setup = () => { Base(); Kit(); AfterRoom2(); AfterHang(); } },
+            new Preset { Name = "Room 5", Hint = "The classroom, the cinema done", Scene = "Room05", Spawn = GameState.SpawnFromCorridor, Setup = () => { Base(); Kit(); AfterRoom2(); AfterHang(); AfterRoom4(); } },
             new Preset { Name = "Mirror room", Hint = "The copy behind the glass", Scene = "Limbo_Corridor", Spawn = "Limbo_Mirror", Setup = () => { Base(); Kit(); AfterRoom2(); Limbo(); GameState.GameBoySolved = true; GameState.UnknownGameBoyTexted = true; } },
         };
     }
@@ -550,6 +551,20 @@ private void ShowPage(Page p, bool instant = false)
         StoryStateManager.SetFlag(StoryStateManager.Flags.AskedGift);
         StoryStateManager.SetFlag(StoryStateManager.Flags.GiftDone);
         GameState.UnlockedTracks.Add(StoryDirector.WakeTrackKey);
+    }
+
+    /// <summary>The cinema is finished: parts found and fitted, the film watched, Salma blocked, the track earned.</summary>
+    private static void AfterRoom4()
+    {
+        GameState.SetRoomCleaned("Room04");
+        StoryStateManager.SetFlag(ProjectorPanel.Inspected);
+        foreach (string f in new[] { ProjectorPanel.LensPart, ProjectorPanel.BulbPart, ProjectorPanel.ReelPart, ProjectorPanel.LensDone, ProjectorPanel.BulbDone, ProjectorPanel.ReelDone })
+            StoryStateManager.SetFlag(f);
+        StoryStateManager.SetFlag(StoryStateManager.Flags.Room4Done);
+        StoryStateManager.SetFlag(StoryStateManager.Flags.Room4Film);
+        StoryStateManager.SetFlag("salmaDone");
+        StoryStateManager.SetFlag("salmaBlocked");
+        GameState.UnlockedTracks.Add("Room04");
     }
 
     private static void AfterRoom2()

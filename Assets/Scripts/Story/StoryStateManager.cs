@@ -21,6 +21,7 @@ public static class StoryStateManager
         public const string GiftDone = "giftDone";       // the gift exchange is over; Room 4 may open
         public const string Room4Done = "room4Done";
         public const string Room4Film = "room4Film";
+        public const string Room5Done = "room5Done";
     }
 
     private static readonly HashSet<string> flags = new HashSet<string>();

@@ -133,6 +133,18 @@ public static class RoomKit
         return go;
     }
 
+    /// <summary>The pedal bin used in the staff room and Rooms 1-3. Returns the point rubbish flies into (just above the lid).</summary>
+    public static Transform TrashCan(Transform parent, Vector3 position, float yaw)
+    {
+        GameObject bin = Prefab("Assets/ThirdParty/nappin/OfficeEssentialsPack/Prefabs/(Prb)TrashCan.prefab", parent, position, yaw, 1f, "Bin");
+        foreach (Transform t in bin.GetComponentsInChildren<Transform>(true)) GameObjectUtility.SetStaticEditorFlags(t.gameObject, 0);   // static batching would strand it when the room is streamed
+        if (bin.GetComponentInChildren<Collider>() == null) FitCollider(bin);
+        GameObject target = new GameObject("DisposeTarget_Bin");
+        target.transform.SetParent(bin.transform, false);
+        target.transform.localPosition = new Vector3(0f, 0.55f, 0f);
+        return target.transform;
+    }
+
     public static Bounds WorldBounds(GameObject go)
     {
         Bounds b = new Bounds(go.transform.position, Vector3.zero);

@@ -34,6 +34,13 @@ public static class ObjectiveManager
         new Objective { Group = 3, Label = "Find a film reel",        IsDone = () => StoryStateManager.HasFlag(ProjectorPanel.ReelPart), Unlocked = () => StoryStateManager.HasFlag(ProjectorPanel.Inspected) },
         new Objective { Group = 3, Label = "Repair the projector",    IsDone = () => ProjectorPanel.AllDone, Unlocked = () => StoryStateManager.HasFlag(ProjectorPanel.Inspected) },
         new Objective { Group = 3, Label = "Watch the film",          IsDone = () => StoryStateManager.HasFlag(StoryStateManager.Flags.Room4Film), Unlocked = () => StoryStateManager.HasFlag(ProjectorPanel.Inspected) },
+        // the classroom: rumour notes on the desks, the equation on the board, the cassette in the drawer
+        new Objective { Group = 4, Label = "Clean room 5",
+                        IsDone = () => StoryStateManager.HasFlag(StoryStateManager.Flags.Room5Done),
+                        Unlocked = () => StoryStateManager.HasFlag(StoryStateManager.Flags.Room4Film) },
+        new Objective { Group = 4, Label = "Find the five passed notes", IsDone = () => Room5Data.AllNotes, Unlocked = () => StoryStateManager.HasFlag(Room5Data.Entered) },
+        new Objective { Group = 4, Label = "Open the teacher's drawer", IsDone = () => StoryStateManager.HasFlag(Room5Data.Solved), Unlocked = () => StoryStateManager.HasFlag(Room5Data.Entered) },
+        new Objective { Group = 4, Label = "Take the cassette from the drawer", IsDone = () => StoryStateManager.HasFlag(Room5Data.Tape), Unlocked = () => StoryStateManager.HasFlag(Room5Data.Entered) },
     };
 
     /// <summary>The first objective that is unlocked and not done yet ("" when there is none).</summary>

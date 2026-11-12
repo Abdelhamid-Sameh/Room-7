@@ -296,7 +296,7 @@ public static class Room4Builder
         FlatText(props, glass.transform.position + new Vector3(-0.015f, 0.001f, 0f), new Vector2(0.06f, 0.05f), "Clara\nانا شوفتها لما رجعنا من برا...", lit, 0.07f, TextAlignmentOptions.Center);
 
         // rubbish + the bin by the door
-        GameObject bin = RoomKit.Box("Bin", props, new Vector3(0.45f, 0.35f, 2.6f), new Vector3(0.45f, 0.7f, 0.45f), Mat("Bin", new Color(0.1f, 0.1f, 0.11f)));
+        Transform bin = RoomKit.TrashCan(props, new Vector3(0.45f, 0f, 2.6f), 0f);   // the same pedal bin as Rooms 1-3
         Color cup = new Color(0.85f, 0.85f, 0.8f), pop = new Color(0.9f, 0.8f, 0.5f);
         Trash("cup1", PrimitiveType.Cylinder, new Vector3(3.6f, 0.1f, 2.2f), new Vector3(0.1f, 0.1f, 0.1f), cup, bin.transform);
         Trash("pop1", PrimitiveType.Cube, new Vector3(4.8f, 0.07f, 4.0f), new Vector3(0.2f, 0.15f, 0.2f), pop, bin.transform);

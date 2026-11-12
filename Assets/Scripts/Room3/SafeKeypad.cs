@@ -20,7 +20,8 @@ public class SafeKeypad : MonoBehaviour
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     private static void ResetStatics() { IsOpen = false; ClosedFrame = -1; instance = null; }
 
-    private const int Digits = 6;
+    private int Digits = 6;   // the safe takes six; other keypads (the classroom drawer) set their own length
+    private TMP_Text titleText;
     private static readonly Color Warm = new Color(0.95f, 0.91f, 0.82f);
     private static readonly Color Dim = new Color(0.55f, 0.53f, 0.47f);
     private static readonly Color CardBg = new Color(0.07f, 0.07f, 0.08f, 0.94f);
@@ -38,7 +39,7 @@ public class SafeKeypad : MonoBehaviour
     private int openedFrame;
     private bool locked;
 
-    public static void Show(Func<string, bool> validate, Action onSuccess)
+    public static void Show(Func<string, bool> validate, Action onSuccess, int digits = 6, string title = "SAFE")
     {
         if (instance == null)
         {
@@ -47,7 +48,7 @@ public class SafeKeypad : MonoBehaviour
             instance = go.AddComponent<SafeKeypad>();
             instance.Build();
         }
-        instance.Open(validate, onSuccess);
+        instance.Open(validate, onSuccess, digits, title);
     }
 
     private void Build()
@@ -80,7 +81,7 @@ public class SafeKeypad : MonoBehaviour
 
         TMP_Text title = Txt("Title", card, 26, Dim);
         Place(title.rectTransform, new Vector2(0f, -22f), new Vector2(380f, 34f));
-        title.text = "SAFE";
+        title.text = "SAFE"; titleText = title;
 
         RectTransform well = Img("Display", card, new Color(0.02f, 0.03f, 0.02f, 1f)).rectTransform;
         Place(well, new Vector2(0f, -66f), new Vector2(360f, 76f));
@@ -103,8 +104,9 @@ public class SafeKeypad : MonoBehaviour
         root.SetActive(false);
     }
 
-    private void Open(Func<string, bool> check, Action success)
+    private void Open(Func<string, bool> check, Action success, int digits, string title)
     {
+        Digits = digits; if (titleText != null) titleText.text = title;
         validate = check; onSuccess = success;
         entered = ""; locked = false;
         Refresh(false);
